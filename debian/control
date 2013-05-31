@@ -1,0 +1,12 @@
+Source: ros-groovy-underwater-sensor-msgs
+Section: misc
+Priority: extra
+Maintainer: Mario Prats <mprats@willowgarage.com>
+Build-Depends: debhelper (>= 7.0.50~), ros-groovy-catkin, ros-groovy-message-generation, ros-groovy-roscpp, ros-groovy-std-msgs
+Homepage: 
+Standards-Version: 3.9.2
+
+Package: ros-groovy-underwater-sensor-msgs
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, ros-groovy-message-runtime, ros-groovy-roscpp, ros-groovy-std-msgs
+Description: Common messages for underwater robotics
