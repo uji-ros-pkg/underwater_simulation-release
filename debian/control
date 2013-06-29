@@ -1,0 +1,12 @@
+Source: ros-groovy-underwater-vehicle-dynamics
+Section: misc
+Priority: extra
+Maintainer: "Mario Prats <mprats@willowgarage.com>"
+Build-Depends: debhelper (>= 7.0.50~), ros-groovy-catkin, ros-groovy-geometry-msgs, ros-groovy-nav-msgs, ros-groovy-rospy, ros-groovy-sensor-msgs, ros-groovy-std-msgs, ros-groovy-tf, ros-groovy-tf-conversions
+Homepage: 
+Standards-Version: 3.9.2
+
+Package: ros-groovy-underwater-vehicle-dynamics
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, ros-groovy-geometry-msgs, ros-groovy-nav-msgs, ros-groovy-rospy, ros-groovy-sensor-msgs, ros-groovy-std-msgs, ros-groovy-tf, ros-groovy-tf-conversions
+Description: An underwater dynamics module
