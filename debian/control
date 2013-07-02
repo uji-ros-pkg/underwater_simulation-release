@@ -1,0 +1,12 @@
+Source: ros-hydro-underwater-sensor-msgs
+Section: misc
+Priority: extra
+Maintainer: "Mario Prats <mprats@willowgarage.com>"
+Build-Depends: debhelper (>= 7.0.50~), ros-hydro-catkin, ros-hydro-message-generation, ros-hydro-roscpp, ros-hydro-std-msgs
+Homepage: 
+Standards-Version: 3.9.2
+
+Package: ros-hydro-underwater-sensor-msgs
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, ros-hydro-message-runtime, ros-hydro-roscpp, ros-hydro-std-msgs
+Description: Common messages for underwater robotics
