@@ -2,10 +2,11 @@
 
 <!-- elementos oceanScene -->
 <!ELEMENT oceanState (windx?,windy?,windSpeed?,depth?,reflectionDamping?,waveScale?,isNotChoppy?,choppyFactor?,crestFoamHeight?,oceanSurfaceHeight?,fog?,color?,attenuation?)>
-<!ELEMENT simParams (disableShaders?,resw?,resh?,offsetp?,offsetr?,enablePhysics?,gravity?,physicsWater?)>
-<!ELEMENT vehicle (name,file,jointValues?,position?,orientation?,virtualCamera*, rangeSensor*, objectPicker*, imu*, pressureSensor*, gpsSensor*, dvlSensor*, virtualRangeImage*,multibeamSensor*)>
-<!ELEMENT virtualCamera (name,relativeTo,resw?,resh?,position?,orientation?,baseline?,frameId?, parameters?, showpath?)>
+<!ELEMENT simParams (disableShaders?,resw?,resh?,offsetp?,offsetr?,enablePhysics?,gravity?,physicsFrequency?,physicsSubSteps?, physicsSolver?,showTrajectory*)>
+<!ELEMENT vehicle (name,file,jointValues?,position?,orientation?,virtualCamera*, structuredLightProjector*, rangeSensor*, objectPicker*, imu*, pressureSensor*, gpsSensor*, dvlSensor*, virtualRangeImage*,multibeamSensor*, simulatedDevices?, echo*, ForceSensor*)>
+<!ELEMENT virtualCamera (name,relativeTo,resw?,resh?,position?,orientation?,baseline?,frameId?, parameters?, showpath?,grayscale?)>
 <!ELEMENT virtualRangeImage (name,relativeTo,resw?,resh?,position?,orientation?,parameters?)>
+<!ELEMENT structuredLightProjector (name,relativeTo,fov,image_name,laser?,position?,orientation?)>
 <!ELEMENT rangeSensor (name,relativeTo,range,visible?,position?,orientation?)>
 <!ELEMENT objectPicker (name,relativeTo,range,position?,orientation?)>
 <!ELEMENT imu (name,relativeTo,position?,orientation?, std?)>
@@ -15,7 +16,7 @@
 <!ELEMENT multibeamSensor (name,relativeTo,position?,orientation?, initAngle,finalAngle, angleIncr,range)>
 <!ELEMENT camera (freeMotion?,objectToTrack?,fov?,aspectRatio?,near?,far?,position?,lookAt?) >
 <!ELEMENT object (name,file,position,orientation,offsetp?,offsetr?,physics?)>
-<!ELEMENT rosInterfaces ((ROSOdomToPAT*)?, (PATToROSOdom*)?, (ArmToROSJointState*)?, (ROSJointStateToArm*)?, (VirtualCameraToROSImage*)?, (ROSImageToHUD*)?,(ROSTwistToPAT*)?, (RangeSensorToROSRange*)?, (ROSPoseToPAT*)?, (ImuToROSImu*)?, (PressureSensorToROS*)?, (GPSSensorToROS*)?, (DVLSensorToROS*)?, (RangeImageSensorToROSImage*)?,(multibeamSensorToLaserScan*)?)>
+<!ELEMENT rosInterfaces ((ROSOdomToPAT*)?, (PATToROSOdom*)?, (WorldToROSTF*)?, (ArmToROSJointState*)?, (ROSJointStateToArm*)?, (VirtualCameraToROSImage*)?, (ROSImageToHUD*)?,(ROSTwistToPAT*)?, (RangeSensorToROSRange*)?, (ROSPoseToPAT*)?, (ImuToROSImu*)?, (PressureSensorToROS*)?, (GPSSensorToROS*)?, (DVLSensorToROS*)?, (RangeImageSensorToROSImage*)?,(multibeamSensorToLaserScan*)?, (SimulatedDeviceROS*)?,(contactSensorToROS*)?,(echoROS*)?,(ForceSensorROS*)?)>
 
 <!-- elementos comunes -->
 <!ELEMENT position (x,y,z)>
@@ -33,6 +34,7 @@
 <!ELEMENT b (#PCDATA)>
 <!ELEMENT p (#PCDATA)>
 <!ELEMENT std (#PCDATA)>
+<!ELEMENT target (#PCDATA)>
 
 
 <!-- elementos oceanState -->
@@ -56,17 +58,13 @@
 <!ELEMENT eye_in_hand (#PCDATA)>
 <!ELEMENT resw (#PCDATA)>
 <!ELEMENT resh (#PCDATA)>
+<!ELEMENT showTrajectory (target,color?,lineStyle?)>
+<!ELEMENT lineStyle (#PCDATA)>
 <!ELEMENT enablePhysics (#PCDATA)>
+<!ELEMENT physicsFrequency (#PCDATA)>
+<!ELEMENT physicsSubSteps (#PCDATA)>
+<!ELEMENT physicsSolver (#PCDATA)>
 <!ELEMENT gravity (x,y,z)>
-<!ELEMENT physicsWater (size,position,resolution)>
-<!ELEMENT size (minX,maxX,minY,maxY,minZ,maxZ)>
-<!ELEMENT resolution (#PCDATA)>
-<!ELEMENT minX (#PCDATA)>
-<!ELEMENT maxX (#PCDATA)>
-<!ELEMENT minY (#PCDATA)>
-<!ELEMENT maxY (#PCDATA)>
-<!ELEMENT minZ (#PCDATA)>
-<!ELEMENT maxZ (#PCDATA)>
 
 <!--elementos camera -->
 <!ELEMENT freeMotion (#PCDATA)>
@@ -91,10 +89,15 @@
 <!ELEMENT baseline (#PCDATA)>
 <!ELEMENT frameId (#PCDATA)>
 <!ELEMENT showpath (#PCDATA)>
+<!ELEMENT grayscale (#PCDATA)>
 
 <!--elementos rangeSensor -->
 <!ELEMENT range (#PCDATA)>
 <!ELEMENT visible (#PCDATA)>
+
+<!--elementos structuredLightProjector -->
+<!ELEMENT image_name (#PCDATA)>
+<!ELEMENT laser (#PCDATA)>
 
 <!--elementos multibeamSensor -->
 <!ELEMENT initAngle (#PCDATA)>
@@ -109,8 +112,9 @@
 <!ELEMENT joint (#PCDATA)>
 
 <!-- elementos rosinterfaces -->
-<!ELEMENT ROSOdomToPAT (topic,vehicleName, visualize?)>
+<!ELEMENT ROSOdomToPAT (topic,vehicleName)>
 <!ELEMENT PATToROSOdom  (topic, vehicleName, rate?)>
+<!ELEMENT WorldToROSTF  (rootName, enableObjects?, rate?)>
 <!ELEMENT ArmToROSJointState  (topic, vehicleName, rate?)>
 <!ELEMENT ROSJointStateToArm  (topic,vehicleName)>
 <!ELEMENT VirtualCameraToROSImage (cameraName,imageTopic,infoTopic,rate?,depth?)>
@@ -124,6 +128,7 @@
 <!ELEMENT GPSSensorToROS (name, topic, rate?)>
 <!ELEMENT DVLSensorToROS (name, topic, rate?)>
 <!ELEMENT multibeamSensorToLaserScan (name, topic, rate?)>
+<!ELEMENT contactSensorToROS (name, topic, rate?)>
 
 <!ELEMENT width (#PCDATA)>
 <!ELEMENT height (#PCDATA)>
@@ -137,19 +142,39 @@
 <!ELEMENT cameraName (#PCDATA)>
 <!ELEMENT imageTopic (#PCDATA)>
 <!ELEMENT infoTopic (#PCDATA)>
-<!ELEMENT visualize (#PCDATA)>
+<!ELEMENT rootName (#PCDATA)>
+<!ELEMENT enableObjects (#PCDATA)>
 
 <!-- elementos vcamtoROSImage -->
 <!ELEMENT cam (#PCDATA)>
 <!ELEMENT info (#PCDATA)>
 
 <!-- elementos physics -->
-<!ELEMENT physics (mass?,inertia?,collisionShapeType?,linearDamping?,angularDamping?,linearFactor?,angularFactor?,isKinematic?)>
+<!ELEMENT physics (mass?,inertia?,collisionShapeType?,collisionShape?,linearDamping?,angularDamping?,isKinematic? , minLinearLimit?, maxLinearLimit?,minAngularLimit?,maxAngularLimit?)>
 <!ELEMENT mass (#PCDATA)>
 <!ELEMENT inertia (x,y,z)>
 <!ELEMENT collisionShapeType (#PCDATA)>
+<!ELEMENT collisionShape (#PCDATA)>
 <!ELEMENT linearDamping (#PCDATA)>
 <!ELEMENT angularDamping (#PCDATA)>
-<!ELEMENT linearFactor (x,y,z)>
-<!ELEMENT angularFactor (x,y,z)>
+<!ELEMENT minLinearLimit (x,y,z)>
+<!ELEMENT maxLinearLimit (x,y,z)>
 <!ELEMENT isKinematic (#PCDATA)>
+<!ELEMENT minAngularLimit (x,y,z)>
+<!ELEMENT maxAngularLimit (x,y,z)>
+
+
+<!-- simulatedDevices -->
+<!ELEMENT simulatedDevices (
+echo*
+)>
+<!ELEMENT SimulatedDeviceROS (
+echoROS?
+)>
+
+<!ELEMENT echo (name, info )>
+<!ELEMENT echoROS (name, topic, rate?)>
+
+<!ELEMENT ForceSensor (name, target, offsetp, offsetr)>
+<!ELEMENT ForceSensorROS (name, topic, rate?)>
+
