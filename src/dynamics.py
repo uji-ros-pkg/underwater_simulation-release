@@ -11,6 +11,10 @@ import sys
 from std_msgs.msg import Float64MultiArray 
 from geometry_msgs.msg import Pose 
 from geometry_msgs.msg import Quaternion
+from geometry_msgs.msg import WrenchStamped
+
+#import services
+from std_srvs.srv import Empty
 
 # More imports
 from numpy import *
@@ -47,6 +51,7 @@ class Dynamics :
         self.p_0 = array(rospy.get_param(self.vehicle_name + "/dynamics" + "/initial_pose"))
         self.v_0 = array(rospy.get_param(self.vehicle_name + "/dynamics" + "/initial_velocity"))
         self.frame_id = rospy.get_param(self.vehicle_name + "/dynamics" + "/frame_id")
+        self.external_force_topic = rospy.get_param(self.vehicle_name + "/dynamics" + "/external_force_topic")
     
 #       Currents data
         self.current_mean = array( rospy.get_param("dynamics/current_mean") )
@@ -157,8 +162,9 @@ class Dynamics :
         d = self.dumpingMatrix()
         g = self.gravity()
         c_v = dot((c-d), self.v)
-        v_dot = dot(self.IM, (t-c_v-g)) #t-c_v-g
+        v_dot = dot(self.IM, (t-c_v-g+self.collisionForce)) #t-c_v-g+collisionForce
         v_dot = squeeze(asarray(v_dot)) #Transforms a matrix into an array
+        self.collisionForce=[0,0,0,0,0,0]
         return v_dot
         
 #
@@ -210,7 +216,9 @@ class Dynamics :
             
         self.y_1 = y
         return y
-    
+  
+    def updateCollision(self, force) :
+        self.collisionForce=[force.wrench.force.x,force.wrench.force.y,force.wrench.force.z,force.wrench.torque.x,force.wrench.torque.y,force.wrench.torque.z]        
     
     def pubPose(self, event):
         pose = Pose()
@@ -237,6 +245,11 @@ class Dynamics :
         v = PyKDL.Vector(tf[0], tf[1], tf[2])
         frame = PyKDL.Frame(r, v)
         return frame
+
+    def reset(self,req):
+        self.v = self.v_0
+        self.p = self.p_0
+	return []
     
     def __init__(self):
         """ Simulates the dynamics of an AUV """
@@ -248,6 +261,9 @@ class Dynamics :
         self.vehicle_name=self.namespace
         self.input_topic=sys.argv[2]
         self.output_topic=sys.argv[3]
+
+    #  Collision parameters
+	self.collisionForce = [0,0,0,0,0,0]
 
     #   Load dynamic parameters
         self.getConfig()
@@ -298,10 +314,14 @@ class Dynamics :
     	#Publish pose to UWSim
         rospy.Timer(rospy.Duration(self.uwsim_period), self.pubPose)
         
-    #   Create Subscriber
+    #   Create Subscribers for thrusters and collisions
 	#TODO: set the topic names as parameters
         rospy.Subscriber(self.input_topic, Float64MultiArray, self.updateThrusters)
-        
+        rospy.Subscriber(self.external_force_topic, WrenchStamped, self.updateCollision)
+
+
+	s = rospy.Service('/dynamics/reset',Empty, self.reset)
+	
     def iterate(self):
         t1 = rospy.Time.now()
 
