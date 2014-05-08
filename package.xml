@@ -1,13 +1,14 @@
 <?xml version="1.0"?>
 <package>
   <name>underwater_vehicle_dynamics</name>
-  <version>1.2.0</version>
+  <version>1.3.1</version>
   <description>An underwater dynamics module</description>
 
   <author>Arnau Carrera</author>
   <author>Narcis Palomeras</author>
-  <author email="mprats@willowgarage.com">Mario Prats</author>
-  <maintainer email="mprats@willowgarage.com">Mario Prats</maintainer>
+  <author email="marioprats@gmail.com">Mario Prats</author>
+  <maintainer email="marioprats@gmail.com">Mario Prats</maintainer>
+  <maintainer email="perezsolerj@gmail.com">Javier Perez</maintainer>
 
   <license>BSD</license>
 
