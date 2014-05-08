@@ -48,6 +48,9 @@
       <z> -1.57 </z>
     </offsetr>
     <enablePhysics> 1 </enablePhysics>
+    <showTrajectory>
+      <target>girona500</target>
+    </showTrajectory>
   </simParams>
   <camera>
     <freeMotion> 1 </freeMotion>
@@ -79,7 +82,7 @@
       <joint>0.3 </joint>
     </jointValues>
     <position>
-      <x> 0</x>
+      <x> 0.2</x>
       <y> 0 </y>
       <z> 2.0 </z>
     </position>
@@ -241,7 +244,7 @@
       <orientation>
         <r>0</r>
         <p>0</p>
-        <y>1.57 </y>
+        <y>3.14 </y>
       </orientation>
       <initAngle>-60</initAngle>
       <finalAngle>60</finalAngle>
@@ -249,6 +252,31 @@
       <range>10</range>
     </multibeamSensor>
 
+    <simulatedDevices>
+      <echo>
+        <name>g500_echo1</name>
+        <info>Echo example 1</info>
+      </echo>
+    </simulatedDevices>
+    <echo>
+      <name>g500_echo2</name>
+      <info>Echo example 2</info>
+    </echo>
+
+    <ForceSensor>
+      <name>ForceG500</name>
+      <target>base_link</target>
+      <offsetp>
+        <x>-0.2</x>
+        <y>0.75</y>
+        <z>0</z>
+      </offsetp>
+      <offsetr>
+        <x>-1.57</x>
+        <y>0</y>
+        <z>3.14</z>
+      </offsetr>
+    </ForceSensor>
   </vehicle>
 
   <object>
@@ -309,8 +337,12 @@
     <ROSOdomToPAT>
       <topic> /dataNavigator </topic>
       <vehicleName> girona500 </vehicleName>
-      <visualize> 1 </visualize>
     </ROSOdomToPAT>
+    <WorldToROSTF>
+      <rootName> world </rootName>
+      <enableObjects> 1 </enableObjects>
+      <rate>10</rate>
+    </WorldToROSTF>
     <ArmToROSJointState> 
 	<topic>/uwsim/joint_state</topic>
 	<vehicleName> girona500 </vehicleName>
@@ -366,6 +398,28 @@
       <name>multibeam</name>
       <topic>g500/multibeam</topic>
     </multibeamSensorToLaserScan>
+    <SimulatedDeviceROS>
+      <echoROS>
+        <name>g500_echo1</name>
+        <topic>g500/echo1</topic>
+        <rate>1</rate>
+      </echoROS>
+    </SimulatedDeviceROS>
+    <contactSensorToROS>
+      <name>girona500</name>
+      <topic>g500/contactSensor</topic>
+      <rate> 100 </rate>
+    </contactSensorToROS>
+    <echoROS>
+      <name>g500_echo2</name>
+      <topic>g500/echo2</topic>
+      <rate>1</rate>
+    </echoROS>
+    <ForceSensorROS>
+      <name>ForceG500</name>
+      <topic>g500/ForceSensor</topic>
+      <rate>100</rate>
+    </ForceSensorROS>
   </rosInterfaces>
 </UWSimScene>
 
