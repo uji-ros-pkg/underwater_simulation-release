@@ -1,0 +1,12 @@
+Source: ros-hydro-underwater-vehicle-dynamics
+Section: misc
+Priority: extra
+Maintainer: Mario Prats <marioprats@gmail.com>
+Build-Depends: debhelper (>= 7.0.50~), ros-hydro-catkin, ros-hydro-geometry-msgs, ros-hydro-nav-msgs, ros-hydro-rospy, ros-hydro-sensor-msgs, ros-hydro-std-msgs, ros-hydro-tf, ros-hydro-tf-conversions
+Homepage: 
+Standards-Version: 3.9.2
+
+Package: ros-hydro-underwater-vehicle-dynamics
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, ros-hydro-geometry-msgs, ros-hydro-nav-msgs, ros-hydro-rospy, ros-hydro-sensor-msgs, ros-hydro-std-msgs, ros-hydro-tf, ros-hydro-tf-conversions
+Description: An underwater dynamics module
