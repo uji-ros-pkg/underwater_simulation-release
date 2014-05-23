@@ -1,0 +1,12 @@
+Source: ros-hydro-uwsim
+Section: misc
+Priority: extra
+Maintainer: Mario Prats <marioprats@gmail.com>
+Build-Depends: debhelper (>= 9.0.0), libboost-all-dev, libgl1-mesa-dev, libglu1-mesa-dev, libopenscenegraph-dev, libopenscenegraph80, libopenthreads-dev, libopenthreads14, libxml++2.6-2, libxml++2.6-dev, openscenegraph, ros-hydro-catkin, ros-hydro-geometry-msgs, ros-hydro-image-transport, ros-hydro-kdl-parser, ros-hydro-nav-msgs, ros-hydro-pluginlib, ros-hydro-resource-retriever, ros-hydro-robot-state-publisher, ros-hydro-roscpp, ros-hydro-sensor-msgs, ros-hydro-tf, ros-hydro-underwater-sensor-msgs, ros-hydro-urdf, ros-hydro-uwsim-bullet, ros-hydro-uwsim-osgbullet, ros-hydro-uwsim-osgocean, ros-hydro-uwsim-osgworks
+Homepage: http://www.irs.uji.es/uwsim/
+Standards-Version: 3.9.2
+
+Package: ros-hydro-uwsim
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, libboost-all-dev, libgl1-mesa-dev, libglu1-mesa-dev, libopenscenegraph-dev, libopenscenegraph80, libopenthreads-dev, libopenthreads14, libxml++2.6-2, libxml++2.6-dev, openscenegraph, ros-hydro-geometry-msgs, ros-hydro-image-transport, ros-hydro-kdl-parser, ros-hydro-nav-msgs, ros-hydro-pluginlib, ros-hydro-resource-retriever, ros-hydro-robot-state-publisher, ros-hydro-roscpp, ros-hydro-sensor-msgs, ros-hydro-tf, ros-hydro-underwater-sensor-msgs, ros-hydro-urdf, ros-hydro-uwsim-bullet, ros-hydro-uwsim-osgbullet, ros-hydro-uwsim-osgocean, ros-hydro-uwsim-osgworks
+Description: UWSim is an UnderWater SIMulator for marine robotics research and development. UWSim visualizes an underwater virtual scenario that can be configured using standard modeling software. Controllable underwater vehicles, surface vessels and robotic manipulators, as well as simulated sensors, can be added to the scene and accessed externally through ROS interfaces. This allows to easily integrate the visualization tool with existing control architectures.
