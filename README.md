@@ -1,3 +1,25 @@
+## underwater_simulation (hydro) - 1.3.1-1
+
+The packages in the `underwater_simulation` repository were released into the `hydro` distro by running `/usr/bin/bloom-release underwater_simulation --track hydro --rosdistro hydro` on `Fri, 23 May 2014 22:47:23 -0000`
+
+These packages were released:
+- `underwater_sensor_msgs`
+- `underwater_vehicle_dynamics`
+- `uwsim`
+
+Version of package(s) in repository `underwater_simulation`:
+- rosdistro version: `1.3.1-0`
+- old version: `1.3.1-0`
+- new version: `1.3.1-1`
+
+Versions of tools used:
+- bloom version: `0.5.9`
+- catkin_pkg version: `0.2.2`
+- rosdep version: `0.10.27`
+- rosdistro version: `0.3.5`
+- vcstools version: `0.1.35`
+
+
 ## underwater_simulation (hydro) - 1.3.1-0
 
 The packages in the `underwater_simulation` repository were released into the `hydro` distro by running `/usr/bin/bloom-release underwater_simulation --track hydro --rosdistro hydro` on `Thu, 08 May 2014 10:03:09 -0000`
