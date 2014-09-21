@@ -89,6 +89,7 @@ void ROSOdomToPAT::processData(const nav_msgs::Odometry::ConstPtr& odom)
       sMsv_osg.setRotate(
           osg::Quat(odom->pose.pose.orientation.x, odom->pose.pose.orientation.y, odom->pose.pose.orientation.z,
                     odom->pose.pose.orientation.w));
+      sMsv_osg.preMultScale(transform->getMatrix().getScale());
     }
     else
     {
@@ -222,6 +223,7 @@ void ROSPoseToPAT::processData(const geometry_msgs::Pose::ConstPtr& pose)
 
     sMsv_osg.setTrans(pose->position.x, pose->position.y, pose->position.z);
     sMsv_osg.setRotate(osg::Quat(pose->orientation.x, pose->orientation.y, pose->orientation.z, pose->orientation.w));
+    sMsv_osg.preMultScale(transform->getMatrix().getScale());
 
     transform->setMatrix(sMsv_osg);
 
@@ -601,6 +603,30 @@ ArmToROSJointState::~ArmToROSJointState()
 {
 }
 
+void VirtualCameraToROSImage::CameraBufferCallback::operator () (const osg::Camera& camera) const
+{
+  if(pub)
+  {
+    pub->mutex.lock();
+    if (depth)
+    {
+      pub->osgimage = new osg::Image(*cam->depthTexture.get());
+    }
+    else
+    {
+     pub->osgimage = new osg::Image(*cam->renderTexture.get());
+    }
+    pub->mutex.unlock();
+  }
+}
+
+VirtualCameraToROSImage::CameraBufferCallback::CameraBufferCallback(VirtualCameraToROSImage * publisher,VirtualCamera *camera,int depth)
+{
+  pub = publisher;
+  cam=camera; //We could read data from cameracb, but it is already on virtualCamera.
+  this->depth=depth;
+}
+
 VirtualCameraToROSImage::VirtualCameraToROSImage(VirtualCamera *camera, std::string topic, std::string info_topic,
                                                  int rate, int depth) :
     ROSPublisherInterface(info_topic, rate), cam(camera), image_topic(topic)
@@ -608,6 +634,8 @@ VirtualCameraToROSImage::VirtualCameraToROSImage(VirtualCamera *camera, std::str
   it.reset(new image_transport::ImageTransport(nh_));
   this->depth = depth;
   this->bw = camera->bw;
+  CameraBufferCallback * buffercb = new  CameraBufferCallback(this,cam,depth); 
+  cam->textureCamera->setPostDrawCallback(buffercb); 
 }
 
 void VirtualCameraToROSImage::createPublisher(ros::NodeHandle &nh)
@@ -624,15 +652,6 @@ void VirtualCameraToROSImage::createPublisher(ros::NodeHandle &nh)
 void VirtualCameraToROSImage::publish()
 {
   //OSG_DEBUG << "OSGImageToROSImage::publish entering" << std::endl;
-  osg::ref_ptr < osg::Image > osgimage;
-  if (depth)
-  {
-    osgimage = cam->depthTexture;
-  }
-  else
-  {
-    osgimage = cam->renderTexture;
-  }
   if (osgimage != NULL && osgimage->getTotalSizeInBytes() != 0)
   {
     //OSG_DEBUG << "\t image size: " << cam->renderTexture->s() << " " << cam->renderTexture->t() << " " << cam->renderTexture->getTotalSizeInBytes() << std::endl;
@@ -700,6 +719,7 @@ void VirtualCameraToROSImage::publish()
 
       //img_info.distortion_model = sensor_msgs::distortion_models::PLUMB_BOB;
 
+      mutex.lock();
       unsigned char *virtualdata = (unsigned char*)osgimage->data();
       //memcpy(&(img.data.front()),virtualdata,d*sizeof(char));
       //Memory cannot be directly copied, since the image frame used in OpenSceneGraph (OpenGL glReadPixels) is on
@@ -736,6 +756,7 @@ void VirtualCameraToROSImage::publish()
         }
       else
         memset(&(img.data.front()), 0, d);
+      mutex.unlock();
 
       img_pub_.publish(img);
       pub_.publish(img_info);
@@ -974,6 +995,90 @@ void WorldToROSTF::publish()
          tfpub_->sendTransform(t2);
          tfpub_->sendTransform(t);  
       }
+
+      //publish Cameras
+      for(int j=0; j< iauvFile_[i].get()->camview.size();j++)
+      {
+        tf::Pose pose;
+        std::string parent;
+        tf::Pose OSGToTFconvention;
+        if(iauvFile_[i].get()->camview[j].getTFTransform(pose,parent))
+        {
+          OSGToTFconvention.setOrigin(tf::Vector3(0,0,0));
+          OSGToTFconvention.setRotation(tf::Quaternion(tf::Vector3(1,0,0),M_PI));//OSG convention is different to tf:
+          //Remember that in opengl/osg, the camera frame is a right-handed system with Z going backwards (opposite to the viewing direction) and Y up.
+          //While in tf convention, the camera frame is a right-handed system with Z going forward (in the viewing direction) and Y down.
+
+          for(int k=0;k<iauvFile_[i].get()->multibeam_sensors.size();k++) //check if camera comes from multibeam
+	    if(iauvFile_[i].get()->multibeam_sensors[k].name==iauvFile_[i].get()->camview[j].name)
+              OSGToTFconvention.setRotation(tf::Quaternion(tf::Vector3(0,1,0),M_PI/2));  //As we are using camera to simulate it, we need to rotate it
+
+          pose=pose*OSGToTFconvention;
+          tf::StampedTransform t(pose, getROSTime(),   "/"+iauvFile_[i].get()->name + "/" +parent, iauvFile_[i].get()->camview[j].name);
+          tfpub_->sendTransform(t);
+        }  
+      }
+
+      //publish imus
+      for(int j=0; j< iauvFile_[i].get()->imus.size();j++)
+      {
+        tf::Pose pose;
+        std::string parent;
+        if(iauvFile_[i].get()->imus[i].getTFTransform(pose,parent))
+        {
+          tf::StampedTransform t(pose, getROSTime(),   "/"+iauvFile_[i].get()->name + "/" +parent, iauvFile_[i].get()->imus[i].name);
+          tfpub_->sendTransform(t);
+        }  
+      }
+
+      //publish RangeSensor
+      for(int j=0; j< iauvFile_[i].get()->range_sensors.size();j++)
+      {
+        tf::Pose pose;
+        std::string parent;
+        if(iauvFile_[i].get()->range_sensors[i].getTFTransform(pose,parent))
+        {
+          tf::StampedTransform t(pose, getROSTime(),   "/"+iauvFile_[i].get()->name + "/" +parent, iauvFile_[i].get()->range_sensors[i].name);
+          tfpub_->sendTransform(t);
+        }  
+      }
+
+      //publish PressureSensor
+      for(int j=0; j< iauvFile_[i].get()->pressure_sensors.size();j++)
+      {
+        tf::Pose pose;
+        std::string parent;
+        if(iauvFile_[i].get()->pressure_sensors[i].getTFTransform(pose,parent))
+        {
+          tf::StampedTransform t(pose, getROSTime(),   "/"+iauvFile_[i].get()->name + "/" +parent, iauvFile_[i].get()->pressure_sensors[i].name);
+          tfpub_->sendTransform(t);
+        }  
+      }
+
+      //publish GPSSensor
+      for(int j=0; j< iauvFile_[i].get()->gps_sensors.size();j++)
+      {
+        tf::Pose pose;
+        std::string parent;
+        if(iauvFile_[i].get()->gps_sensors[i].getTFTransform(pose,parent))
+        {
+          tf::StampedTransform t(pose, getROSTime(),   "/"+iauvFile_[i].get()->name + "/" +parent, iauvFile_[i].get()->gps_sensors[i].name);
+          tfpub_->sendTransform(t);
+        }  
+      }
+
+      //publish DVLSensor
+      for(int j=0; j< iauvFile_[i].get()->dvl_sensors.size();j++)
+      {
+        tf::Pose pose;
+        std::string parent;
+        if(iauvFile_[i].get()->dvl_sensors[i].getTFTransform(pose,parent))
+        {
+          tf::StampedTransform t(pose, getROSTime(),   "/"+iauvFile_[i].get()->name + "/" +parent, iauvFile_[i].get()->dvl_sensors[i].name);
+          tfpub_->sendTransform(t);
+        }  
+      }
+
    }
 
    //Publish object frames

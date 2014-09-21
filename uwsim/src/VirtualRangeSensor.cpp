@@ -14,24 +14,28 @@
 #include <uwsim/UWSimUtils.h>
 #include <iostream>
 
+#include <osg/PositionAttitudeTransform>
 VirtualRangeSensor::VirtualRangeSensor()
 {
 }
 
-VirtualRangeSensor::VirtualRangeSensor(std::string name, osg::Node *root, osg::Node *trackNode, double range,
+VirtualRangeSensor::VirtualRangeSensor(std::string name, std::string parentName, osg::Node *root, osg::Node *trackNode, double range,
                                        bool visible)
 {
-  init(name, root, trackNode, range, visible);
+  init(name,parentName, root, trackNode, range, visible);
 }
 
-void VirtualRangeSensor::init(std::string name, osg::Node *root, osg::Node *trackNode, double range, bool visible)
+void VirtualRangeSensor::init(std::string name, std::string parentName, osg::Node *root, osg::Node *trackNode, double range, bool visible)
 {
   this->name = name;
+  this->parentLinkName=parentName;
   this->root = root;
 
   this->trackNode = trackNode;
   //Add a switchable frame geometry on the sensor frame
   osg::ref_ptr < osg::Node > axis = UWSimGeometry::createSwitchableFrame();
+  //Add label to switchable frame
+  axis->asGroup()->addChild(UWSimGeometry::createLabel(name));
   this->trackNode->asGroup()->addChild(axis);
 
   this->range = range;
@@ -41,5 +45,18 @@ void VirtualRangeSensor::init(std::string name, osg::Node *root, osg::Node *trac
   node_tracker = new IntersectorUpdateCallback(range, visible, root);
   trackNode->setUpdateCallback(node_tracker);
   trackNode->asGroup()->addChild(node_tracker->geode);
+}
+
+int VirtualRangeSensor::getTFTransform(tf::Pose & pose, std::string & parent){
+  parent=parentLinkName;
+  pose.setOrigin(tf::Vector3(trackNode->asTransform()->asPositionAttitudeTransform()->getPosition().x(),
+                        trackNode->asTransform()->asPositionAttitudeTransform()->getPosition().y(),
+                        trackNode->asTransform()->asPositionAttitudeTransform()->getPosition().z()));
+  pose.setRotation( tf::Quaternion(trackNode->asTransform()->asPositionAttitudeTransform()->getAttitude().x(),
+                        trackNode->asTransform()->asPositionAttitudeTransform()->getAttitude().y(),
+                        trackNode->asTransform()->asPositionAttitudeTransform()->getAttitude().z(),
+                        trackNode->asTransform()->asPositionAttitudeTransform()->getAttitude().w()));
+  return 1;
+
 }
 

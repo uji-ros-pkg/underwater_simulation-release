@@ -33,7 +33,6 @@ class SimulatedIAUV
 {
 public:
   std::vector<VirtualCamera> camview;
-  std::vector<VirtualCamera> camrange;
   std::vector<VirtualRangeSensor> range_sensors;
   std::vector<VirtualSLSProjector> sls_projectors;
   std::vector<ObjectPicker> object_pickers;
@@ -53,6 +52,7 @@ public:
   boost::shared_ptr<URDFRobot> urdf; ///< URDF I-AUV
   //osg::LightSource* lightSource;	///< vehicle lamp
   osg::ref_ptr<osg::MatrixTransform> baseTransform;
+  osg::Vec3d scale;  //Vehicle scale factor
 
   SimulatedIAUV(SceneBuilder *oscene, Vehicle vehicle);
 

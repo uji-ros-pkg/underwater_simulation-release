@@ -363,13 +363,28 @@ public:
 
 class VirtualCameraToROSImage : public ROSPublisherInterface
 {
-  VirtualCamera *cam;
+
+  //Updates camera buffer when publisher is not publishing
+  class CameraBufferCallback : public osg::Camera::DrawCallback
+  {
+    public:
+      virtual void operator () (const osg::Camera& camera) const;
+      CameraBufferCallback(VirtualCameraToROSImage * publisher,VirtualCamera *camera,int depth);
+    private:
+
+      VirtualCameraToROSImage * pub;
+      VirtualCamera *cam;
+      int depth;
+  };
+
   boost::shared_ptr<image_transport::ImageTransport> it;
   image_transport::Publisher img_pub_;
   std::string image_topic;
+  VirtualCamera *cam;
   int depth;
   int bw;
 public:
+
   VirtualCameraToROSImage(VirtualCamera *camera, std::string topic, std::string info_topic, int rate, int depth);
 
   void createPublisher(ros::NodeHandle &nh);
@@ -377,6 +392,10 @@ public:
   void publish();
 
   ~VirtualCameraToROSImage();
+
+  osg::ref_ptr < osg::Image > osgimage;
+  OpenThreads::Mutex mutex; //Mutex to avoid image overwriting
+
 };
 
 class RangeSensorToROSRange : public ROSPublisherInterface

@@ -15,6 +15,8 @@
 #include <uwsim/SceneBuilder.h>
 #include <iostream>
 
+#include <osg/PositionAttitudeTransform>
+
 class UpdateUnderWater : public osg::Uniform::Callback
 {
 public:
@@ -69,16 +71,19 @@ VirtualCamera::VirtualCamera()
 {
 }
 
-void VirtualCamera::init(osg::Group *uwsim_root, std::string name, osg::Node *trackNode, int width, int height,
-                         double baseline, std::string frameId, Parameters *params, int range, double fov,
+void VirtualCamera::init(osg::Group *uwsim_root, std::string name, std::string parentName, osg::Node *trackNode, int width,
+                         int height, double baseline, std::string frameId, Parameters *params, int range, double fov,
                          double aspectRatio, double near, double far, int bw, int widget)
 {
   this->uwsim_root = uwsim_root;
   this->name = name;
+  this->parentLinkName=parentName;
 
   this->trackNode = trackNode;
   //Add a switchable frame geometry on the camera frame
   osg::ref_ptr < osg::Node > axis = UWSimGeometry::createSwitchableFrame();
+  //Add label to switchable frame
+  axis->asGroup()->addChild(UWSimGeometry::createLabel(name));
   this->trackNode->asGroup()->addChild(axis);
 
   this->width = width;
@@ -120,41 +125,24 @@ void VirtualCamera::init(osg::Group *uwsim_root, std::string name, osg::Node *tr
   createCamera();
 }
 
-VirtualCamera::VirtualCamera(osg::Group *uwsim_root, std::string name, osg::Node *trackNode, int width, double fov,
-                             double range)
+VirtualCamera::VirtualCamera(osg::Group *uwsim_root, std::string name,std::string parentName, osg::Node *trackNode, int width,
+                             double fov, double range)
 { //Used in multibeam
   //Z-buffer has very low resolution near far plane so we extend it and cut far plane later.
-  init(uwsim_root, name, trackNode, 1, width, 0.0, "", NULL, 1, fov, 1.0 / width, 0.8, range * 1.2, 0, 0);
+  init(uwsim_root, name, parentName, trackNode, 1, width, 0.0, "", NULL, 1, fov, 1.0 / width, 0.8, range * 1.2, 0, 0);
 
 }
 
-VirtualCamera::VirtualCamera(osg::Group *uwsim_root, std::string name, osg::Node *trackNode, int width, int height,
-                             double fov, double aspectRatio)
+VirtualCamera::VirtualCamera(osg::Group *uwsim_root, std::string name,std::string parentName, osg::Node *trackNode, int width,
+                             int height, double fov, double aspectRatio)
 { //Used in structured light projector as shadow camera
-  init(uwsim_root, name, trackNode, width, height, 0.0, "", NULL, 1, fov, aspectRatio, 0.1, 20, 0, 0);
+  init(uwsim_root, name, parentName, trackNode, width, height, 0.0, "", NULL, 1, fov, aspectRatio, 0.1, 20, 0, 0);
 }
 
-VirtualCamera::VirtualCamera(osg::Group *uwsim_root, std::string name, osg::Node *trackNode, int width, int height,
-                             double baseline, std::string frameId)
-{
-  init(uwsim_root, name, trackNode, width, height, baseline, frameId, NULL, 0, 50, 1.33, 0.18, 20, 0, 1);
-}
-
-VirtualCamera::VirtualCamera(osg::Group *uwsim_root, std::string name, osg::Node *trackNode, int width, int height,
-                             double baseline, std::string frameId, Parameters *params, int range, int bw)
-{
-  init(uwsim_root, name, trackNode, width, height, baseline, frameId, params, range, 50, 1.33, 0.18, 20, bw, 1);
-}
-
-VirtualCamera::VirtualCamera(osg::Group *uwsim_root, std::string name, osg::Node *trackNode, int width, int height,
-                             Parameters *params)
-{
-  init(uwsim_root, name, trackNode, width, height, 0.0, "", params, 0, 50, 1.33, 0.18, 20, 0, 1);
-}
-
-VirtualCamera::VirtualCamera(osg::Group *uwsim_root, std::string name, osg::Node *trackNode, int width, int height)
-{
-  init(uwsim_root, name, trackNode, width, height, 0.0, "", NULL, 0, 50, 1.33, 0.18, 20, 0, 1);
+VirtualCamera::VirtualCamera(osg::Group *uwsim_root, std::string name,std::string parentName, osg::Node *trackNode, int width,
+                             int height,double baseline, std::string frameId,double fov, Parameters *params=NULL, int range=0, int bw=0)
+{//Standard camera / depth camera
+  init(uwsim_root, name, parentName, trackNode, width, height, baseline, frameId, params, range, fov, width/(float)height, 0.18, 20, bw, 1);
 }
 
 void VirtualCamera::createCamera()
@@ -241,4 +229,17 @@ osg::ref_ptr<osgWidget::Window> VirtualCamera::getWidgetWindow()
   box->attachMoveCallback();
   box->attachScaleCallback();
   return box;
+}
+
+int VirtualCamera::getTFTransform(tf::Pose & pose, std::string & parent){
+  parent=parentLinkName;
+  pose.setOrigin(tf::Vector3(trackNode->asTransform()->asPositionAttitudeTransform()->getPosition().x(),
+                        trackNode->asTransform()->asPositionAttitudeTransform()->getPosition().y(),
+                        trackNode->asTransform()->asPositionAttitudeTransform()->getPosition().z()));
+  pose.setRotation( tf::Quaternion(trackNode->asTransform()->asPositionAttitudeTransform()->getAttitude().x(),
+                        trackNode->asTransform()->asPositionAttitudeTransform()->getAttitude().y(),
+                        trackNode->asTransform()->asPositionAttitudeTransform()->getAttitude().z(),
+                        trackNode->asTransform()->asPositionAttitudeTransform()->getAttitude().w()));
+  return 1;
+
 }

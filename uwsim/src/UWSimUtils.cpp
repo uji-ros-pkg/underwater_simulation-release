@@ -143,17 +143,20 @@ osg::Node* UWSimGeometry::createSwitchableFrame(double radius, double length)
 
 osg::Node* UWSimGeometry::createFrame(double radius, double length)
 {
-  osg::MatrixTransform *linkBaseTransform = new osg::MatrixTransform(osg::Matrix());
+  osg::Matrix linkBaseMatrix;
+  linkBaseMatrix.makeIdentity();
+  osg::MatrixTransform *linkBaseTransform = new osg::MatrixTransform(linkBaseMatrix);
 
   //create XBase to rotate
   osg::Matrix XBase;
-  XBase.preMultRotate(osg::Quat(M_PI_2, osg::Vec3d(1, 0, 0)));
+  XBase.makeIdentity();
+  XBase.preMultRotate(osg::Quat(M_PI_2, osg::Vec3d(0, 1, 0)));
   XBase.preMultTranslate(osg::Vec3d(0, 0, length / 2));
   osg::MatrixTransform *XBaseTransform = new osg::MatrixTransform(XBase);
   linkBaseTransform->addChild(XBaseTransform);
 
   //create X cylinder, set color, and add to XBase
-  osg::Node *Xcylinder = UWSimGeometry::createOSGCylinder(radius, length);
+  osg::Node * Xcylinder = UWSimGeometry::createOSGCylinder(radius, length);
   osg::StateSet * Xstateset = new osg::StateSet();
   osg::Material * Xmaterial = new osg::Material();
   Xmaterial->setDiffuse(osg::Material::FRONT_AND_BACK, osg::Vec4(1, 0, 0, 0));
@@ -178,14 +181,13 @@ osg::Node* UWSimGeometry::createFrame(double radius, double length)
 
   //create YBase to rotate
   osg::Matrix YBase;
-  YBase.makeIdentity();
-  YBase.preMultRotate(osg::Quat(M_PI_2, osg::Vec3d(0, 1, 0)));
-  YBase.preMultTranslate(osg::Vec3d(0, 0, length / 2));
+  YBase.preMultRotate(osg::Quat(M_PI_2, osg::Vec3d(1, 0, 0)));
+  YBase.preMultTranslate(osg::Vec3d(0, 0, -length / 2));
   osg::MatrixTransform *YBaseTransform = new osg::MatrixTransform(YBase);
   linkBaseTransform->addChild(YBaseTransform);
 
   //create Y cylinder, set color, and add to YBase
-  osg::Node * Ycylinder = UWSimGeometry::createOSGCylinder(radius, length);
+  osg::Node *Ycylinder = UWSimGeometry::createOSGCylinder(radius, length);
   osg::StateSet * Ystateset = new osg::StateSet();
   osg::Material * Ymaterial = new osg::Material();
   Ymaterial->setDiffuse(osg::Material::FRONT_AND_BACK, osg::Vec4(0, 1, 0, 0));
@@ -270,6 +272,34 @@ osg::Node * UWSimGeometry::createOSGSphere(double radius)
   node->asGroup()->addChild(geode);
 
   return node;
+}
+
+osg::Node * UWSimGeometry::createLabel(std::string textToDraw,double charSize, int bb, osg::Vec4 color )
+{
+  //Create text
+  osg::ref_ptr<osgText::Text> text = new osgText::Text;
+  text->setFont( "fonts/arial.ttf" );
+  text->setText(textToDraw);
+  text->setAxisAlignment( osgText::TextBase::SCREEN );
+  text->setDataVariance( osg::Object::DYNAMIC );
+  text->setColor(color);
+  text->setCharacterSize(charSize);
+  if(bb)
+  {
+    text->setBoundingBoxColor(color);
+    text->setDrawMode(osgText::Text::TEXT | osgText::Text::ALIGNMENT | osgText::Text::BOUNDINGBOX);
+  }
+  else
+    text->setDrawMode(osgText::Text::TEXT | osgText::Text::ALIGNMENT);
+
+  //set visual properties
+  osg::ref_ptr<osg::Geode> geode = new osg::Geode;
+  geode->addDrawable( text.get() );
+  geode->getOrCreateStateSet()->setMode(GL_DEPTH_TEST, osg::StateAttribute::OFF); //Draw it over geometry
+  geode->getOrCreateStateSet()->setMode(GL_LIGHTING, osg::StateAttribute::OFF );  //Ignore shadows
+
+  geode->getOrCreateStateSet()->setAttributeAndModes(new osg::Program(), osg::StateAttribute::ON); //Unset shader
+  return geode.release();
 }
 
 void UWSimGeometry::applyStateSets(osg::Node *node)
