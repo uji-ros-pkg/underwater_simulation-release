@@ -1,3 +1,25 @@
+## underwater_simulation (indigo) - 1.3.2-0
+
+The packages in the `underwater_simulation` repository were released into the `indigo` distro by running `/usr/bin/bloom-release underwater_simulation --track indigo --rosdistro indigo --edit` on `Sun, 21 Sep 2014 07:21:22 -0000`
+
+These packages were released:
+- `underwater_sensor_msgs`
+- `underwater_vehicle_dynamics`
+- `uwsim`
+
+Version of package(s) in repository `underwater_simulation`:
+- rosdistro version: `null`
+- old version: `null`
+- new version: `1.3.2-0`
+
+Versions of tools used:
+- bloom version: `0.5.9`
+- catkin_pkg version: `0.2.2`
+- rosdep version: `0.10.27`
+- rosdistro version: `0.3.5`
+- vcstools version: `0.1.35`
+
+
 ## underwater_simulation (hydro) - 1.3.1-1
 
 The packages in the `underwater_simulation` repository were released into the `hydro` distro by running `/usr/bin/bloom-release underwater_simulation --track hydro --rosdistro hydro` on `Fri, 23 May 2014 22:47:23 -0000`
