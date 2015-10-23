@@ -1,0 +1,12 @@
+Source: ros-jade-uwsim
+Section: misc
+Priority: extra
+Maintainer: Mario Prats <marioprats@gmail.com>
+Build-Depends: debhelper (>= 9.0.0), libboost-all-dev, libgl1-mesa-dev, libglu1-mesa-dev, libopenscenegraph-dev, libxml++2.6-2, libxml++2.6-dev, openscenegraph, ros-jade-catkin, ros-jade-geometry-msgs, ros-jade-image-transport, ros-jade-interactive-markers, ros-jade-kdl-parser, ros-jade-nav-msgs, ros-jade-osg-interactive-markers, ros-jade-osg-markers, ros-jade-osg-utils, ros-jade-pcl-ros, ros-jade-pluginlib, ros-jade-resource-retriever, ros-jade-robot-state-publisher, ros-jade-roscpp, ros-jade-sensor-msgs, ros-jade-tf, ros-jade-underwater-sensor-msgs, ros-jade-urdf, ros-jade-uwsim-bullet, ros-jade-uwsim-osgbullet, ros-jade-uwsim-osgocean, ros-jade-uwsim-osgworks, ros-jade-xacro
+Homepage: http://www.irs.uji.es/uwsim/
+Standards-Version: 3.9.2
+
+Package: ros-jade-uwsim
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, libboost-all-dev, libgl1-mesa-dev, libglu1-mesa-dev, libopenscenegraph-dev, libxml++2.6-2, libxml++2.6-dev, openscenegraph, ros-jade-geometry-msgs, ros-jade-image-transport, ros-jade-interactive-markers, ros-jade-kdl-parser, ros-jade-nav-msgs, ros-jade-osg-interactive-markers, ros-jade-osg-markers, ros-jade-osg-utils, ros-jade-pcl-ros, ros-jade-pluginlib, ros-jade-resource-retriever, ros-jade-robot-state-publisher, ros-jade-roscpp, ros-jade-sensor-msgs, ros-jade-tf, ros-jade-underwater-sensor-msgs, ros-jade-urdf, ros-jade-uwsim-bullet, ros-jade-uwsim-osgbullet, ros-jade-uwsim-osgocean, ros-jade-uwsim-osgworks, ros-jade-xacro
+Description: UWSim is an UnderWater SIMulator for marine robotics research and development. UWSim visualizes an underwater virtual scenario that can be configured using standard modeling software. Controllable underwater vehicles, surface vessels and robotic manipulators, as well as simulated sensors, can be added to the scene and accessed externally through ROS interfaces. This allows to easily integrate the visualization tool with existing control architectures.
