@@ -1,0 +1,8 @@
+ros-indigo-underwater-sensor-msgs (1.4.0-1saucy) saucy; urgency=high
+
+  * Added marker service to spawn and modify geometry.
+  * Contributors: perezsolerj
+
+ -- Mario Prats <marioprats@gmail.com>  Tue, 22 Sep 2015 14:00:00 -0000
+
+
