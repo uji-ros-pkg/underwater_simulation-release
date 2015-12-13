@@ -63,7 +63,6 @@ void ROSSceneBuilder::updateIM()
 
 bool  ROSSceneBuilder::markerSRVCallback(underwater_sensor_msgs::SpawnMarker::Request  &req, underwater_sensor_msgs::SpawnMarker::Response &res)
 {
-
   boost::shared_ptr<osg_markers::MarkerBase> markerSearch;
   //Search for marker in markerList
   for (MarkerList::iterator iter = markerList.begin(); iter != markerList.end(); ++iter)
@@ -175,5 +174,8 @@ bool  ROSSceneBuilder::markerSRVCallback(underwater_sensor_msgs::SpawnMarker::Re
 
   res.success=true;
   res.status_message="object " + boost::lexical_cast<std::string>(req.marker.id) + " " + req.marker.ns + " was successfully ADDED.";
+
+  res.success=false;
+  res.status_message="Feature not ready yet... should be working shortly.";
   return true;
 }
