@@ -1,0 +1,12 @@
+Source: ros-indigo-underwater-vehicle-dynamics
+Section: misc
+Priority: extra
+Maintainer: Mario Prats <marioprats@gmail.com>
+Build-Depends: debhelper (>= 9.0.0), ros-indigo-catkin, ros-indigo-geometry-msgs, ros-indigo-nav-msgs, ros-indigo-rospy, ros-indigo-sensor-msgs, ros-indigo-std-msgs, ros-indigo-tf, ros-indigo-tf-conversions
+Homepage: 
+Standards-Version: 3.9.2
+
+Package: ros-indigo-underwater-vehicle-dynamics
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, ros-indigo-geometry-msgs, ros-indigo-nav-msgs, ros-indigo-rospy, ros-indigo-sensor-msgs, ros-indigo-std-msgs, ros-indigo-tf, ros-indigo-tf-conversions
+Description: An underwater dynamics module
