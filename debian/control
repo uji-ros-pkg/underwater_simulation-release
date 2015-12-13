@@ -1,0 +1,12 @@
+Source: ros-jade-underwater-sensor-msgs
+Section: misc
+Priority: extra
+Maintainer: Mario Prats <marioprats@gmail.com>
+Build-Depends: debhelper (>= 9.0.0), ros-jade-catkin, ros-jade-message-generation, ros-jade-roscpp, ros-jade-std-msgs, ros-jade-visualization-msgs
+Homepage: 
+Standards-Version: 3.9.2
+
+Package: ros-jade-underwater-sensor-msgs
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, ros-jade-message-runtime, ros-jade-roscpp, ros-jade-std-msgs, ros-jade-visualization-msgs
+Description: Common messages for underwater robotics
