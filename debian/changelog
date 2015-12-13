@@ -1,0 +1,14 @@
+ros-jade-underwater-sensor-msgs (1.4.1-0utopic) utopic; urgency=high
+
+
+
+ -- Mario Prats <marioprats@gmail.com>  Sun, 13 Dec 2015 13:00:00 -0000
+
+ros-jade-underwater-sensor-msgs (1.4.0-0utopic) utopic; urgency=high
+
+  * Added marker service to spawn and modify geometry.
+  * Contributors: perezsolerj
+
+ -- Mario Prats <marioprats@gmail.com>  Tue, 22 Sep 2015 14:00:00 -0000
+
+
