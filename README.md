@@ -1,3 +1,29 @@
+## underwater_simulation (kinetic) - 1.4.1-0
+
+The packages in the `underwater_simulation` repository were released into the `kinetic` distro by running `/usr/bin/bloom-release underwater_simulation --track kinetic --rosdistro kinetic --new-track` on `Tue, 24 Jan 2017 11:49:07 -0000`
+
+These packages were released:
+- `underwater_sensor_msgs`
+- `underwater_vehicle_dynamics`
+- `uwsim`
+
+Version of package(s) in repository `underwater_simulation`:
+
+- upstream repository: https://github.com/uji-ros-pkg/underwater_simulation.git
+- release repository: unknown
+- rosdistro version: `null`
+- old version: `null`
+- new version: `1.4.1-0`
+
+Versions of tools used:
+
+- bloom version: `0.5.23`
+- catkin_pkg version: `0.2.10`
+- rosdep version: `0.11.5`
+- rosdistro version: `0.5.0`
+- vcstools version: `0.1.39`
+
+
 ## underwater_simulation (jade) - 1.4.1-0
 
 The packages in the `underwater_simulation` repository were released into the `jade` distro by running `/usr/bin/bloom-release underwater_simulation --track jade --rosdistro jade` on `Sun, 13 Dec 2015 23:25:51 -0000`
