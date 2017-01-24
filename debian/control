@@ -1,0 +1,13 @@
+Source: ros-kinetic-uwsim
+Section: misc
+Priority: extra
+Maintainer: Mario Prats <marioprats@gmail.com>
+Build-Depends: debhelper (>= 9.0.0), libboost-all-dev, libgl1-mesa-dev, libglu1-mesa-dev, libopenscenegraph-dev, libxml++2.6-2v5, libxml++2.6-dev, openscenegraph, ros-kinetic-catkin, ros-kinetic-geometry-msgs, ros-kinetic-image-transport, ros-kinetic-interactive-markers, ros-kinetic-kdl-parser, ros-kinetic-nav-msgs, ros-kinetic-osg-interactive-markers, ros-kinetic-osg-markers, ros-kinetic-osg-utils, ros-kinetic-pcl-ros, ros-kinetic-pluginlib, ros-kinetic-resource-retriever, ros-kinetic-robot-state-publisher, ros-kinetic-roscpp, ros-kinetic-sensor-msgs, ros-kinetic-tf, ros-kinetic-underwater-sensor-msgs, ros-kinetic-urdf, ros-kinetic-uwsim-bullet, ros-kinetic-uwsim-osgbullet, ros-kinetic-uwsim-osgocean, ros-kinetic-uwsim-osgworks, ros-kinetic-xacro
+Homepage: http://www.irs.uji.es/uwsim/
+Standards-Version: 3.9.2
+
+Package: ros-kinetic-uwsim
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, libboost-all-dev, libgl1-mesa-dev, libglu1-mesa-dev, libopenscenegraph-dev, libxml++2.6-2v5, libxml++2.6-dev, openscenegraph, ros-kinetic-geometry-msgs, ros-kinetic-image-transport, ros-kinetic-interactive-markers, ros-kinetic-kdl-parser, ros-kinetic-nav-msgs, ros-kinetic-osg-interactive-markers, ros-kinetic-osg-markers, ros-kinetic-osg-utils, ros-kinetic-pcl-ros, ros-kinetic-pluginlib, ros-kinetic-resource-retriever, ros-kinetic-robot-state-publisher, ros-kinetic-roscpp, ros-kinetic-sensor-msgs, ros-kinetic-tf, ros-kinetic-underwater-sensor-msgs, ros-kinetic-urdf, ros-kinetic-uwsim-bullet, ros-kinetic-uwsim-osgbullet, ros-kinetic-uwsim-osgocean, ros-kinetic-uwsim-osgworks, ros-kinetic-xacro
+Description: UWSim is an UnderWater SIMulator for marine robotics research and development.
+ UWSim visualizes an underwater virtual scenario that can be configured using standard modeling software. Controllable underwater vehicles, surface vessels and robotic manipulators, as well as simulated sensors, can be added to the scene and accessed externally through ROS interfaces. This allows to easily integrate the visualization tool with existing control architectures.
