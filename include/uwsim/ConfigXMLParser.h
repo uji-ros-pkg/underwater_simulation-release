@@ -1,10 +1,10 @@
-/* 
+/*
  * Copyright (c) 2013 University of Jaume-I.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the GNU Public License v3.0
  * which accompanies this distribution, and is available at
  * http://www.gnu.org/licenses/gpl.html
- * 
+ *
  * Contributors:
  *     Mario Prats
  *     Javier Perez
@@ -20,7 +20,7 @@
 #include "SimulatedDevices.h"
 #include <libxml++/libxml++.h>
 #include <urdf/model.h>
-
+#include <memory>
 #include <iostream>
 using namespace std;
 #include <cstdlib>
@@ -33,7 +33,7 @@ struct ROSInterfaceInfo
     Unknown, ROSOdomToPAT, PATToROSOdom, ROSJointStateToArm, ArmToROSJointState, VirtualCameraToROSImage,
     RangeSensorToROSRange, ROSImageToHUD, ROSTwistToPAT, ROSPoseToPAT, ImuToROSImu, PressureSensorToROS, GPSSensorToROS,
     DVLSensorToROS, RangeImageSensorToROSImage, multibeamSensorToLaserScan, SimulatedDevice, contactSensorToROS, WorldToROSTF,
-    ROSPointCloudLoader
+    ROSPointCloudLoader, RangeCameraToPCL
   } type_t;
   string subtype; //type of a SimulatedDevice
   std::map<std::string, std::string> values; //all configuration values for a SimulatedDevice
@@ -62,7 +62,8 @@ struct Vcam
   double baseLine; ///baseline for stereo cameras
   double fov;
   double std; //Additive gaussian noise deviation
-  boost::shared_ptr<Parameters> parameters;
+  std::shared_ptr<Parameters> parameters;
+  bool underwaterParticles;
   void init()
   {
     name = "";
@@ -85,6 +86,7 @@ struct Vcam
     bw = 0;
     fov=50;
     std=0.005;
+    underwaterParticles=false;
   }
 };
 
@@ -266,7 +268,7 @@ struct Link
   double rpy[3];
   double quat[4];
   std::string material;
-  boost::shared_ptr<Geometry> cs, geom;
+  std::shared_ptr<Geometry> cs, geom;
   double mass;
 };
 
@@ -276,7 +278,7 @@ struct Joint
   int parent, child; //references to Link
   int mimicp, type; //0 fixed, 1 rotation, 2 prismatic.
   float lowLimit, upLimit;
-  boost::shared_ptr<Mimic> mimic;
+  std::shared_ptr<Mimic> mimic;
   double position[3];
   double rpy[3];
   double axis[3];
@@ -287,6 +289,44 @@ struct Material
 {
   string name;
   double r, g, b, a;
+};
+
+struct LedArrayConfig
+{
+  string name, relativeTo;
+  double position[3];
+  double orientation[3];
+  bool enabled;
+  double radio, space;
+
+  LedArrayConfig()
+  {
+    position[0] = 0;
+    position[1] = 0;
+    position[2] = 0;
+    orientation[0] = 0;
+    orientation[1] = 0;
+    orientation[2] = 0;
+    enabled = false;
+    radio = 0.02;
+    space = 0.2;
+  }
+};
+
+struct TfRelativeConfig
+{
+  std::string tfId;
+  double position[3];
+  double orientation[3];
+  TfRelativeConfig(): tfId("")
+  {
+    position[0] = 0;
+    position[1] = 0;
+    position[2] = 0;
+    orientation[0] = 0;
+    orientation[1] = 0;
+    orientation[2] = 0;
+  }
 };
 
 struct Vehicle
@@ -313,6 +353,10 @@ struct Vehicle
   std::list<XMLMultibeamSensor> multibeam_sensors;
   std::vector<uwsim::SimulatedDeviceConfig::Ptr> simulated_devices;
   std::string URDFFile;
+  LedArrayConfig ledArrayConfig;
+  int fdmPort = -1;
+  int vr = 0;
+  TfRelativeConfig tfRelativeConfig;
 };
 
 struct PhysicProperties
@@ -363,7 +407,7 @@ struct Object
   double offsetp[3];
   double offsetr[3];
   double buried;// % Object buried in the seafloor
-  boost::shared_ptr<PhysicProperties> physicProperties;
+  std::shared_ptr<PhysicProperties> physicProperties;
 };
 
 struct ShowTrajectory
@@ -399,8 +443,63 @@ struct PhysicsConfig
    subSteps = 0;
    solver=Dantzig;
  }
- 
+
 };
+
+struct Mesh{
+  std::string path;
+  double scaleFactor[3] {1,1,1};
+};
+
+struct CustomCommsChannelConfig
+{
+  uint32_t id;
+  double propTimeIncPerMeter, minPropTime;
+  std::string logLevel;
+  CustomCommsChannelConfig(){
+      propTimeIncPerMeter = 0.66667;
+      minPropTime = 0;
+      logLevel = "off";
+  }
+};
+
+struct AcousticCommsChannelConfig
+{
+  uint32_t id;
+  double bandwidth, temperature, salinity, noise;
+  std::string logLevel;
+  AcousticCommsChannelConfig():
+    bandwidth(4096), temperature(25), salinity(35),  noise(0),
+    logLevel("off"){}
+};
+
+struct NetTracingScriptConfig
+{
+  std::string className,
+  libPath, logToFile;
+  int logToConsole, asyncLog;
+  NetTracingScriptConfig(): className(""), libPath(""), logToFile(""), logToConsole(1), asyncLog(1){}
+};
+
+struct NedOriginConfig
+{
+  double lat, lon;
+  bool enabled;
+  NedOriginConfig()
+  {
+    lat = 0;
+    lon = 0;
+    enabled = false;
+  }
+};
+
+struct PacketBuilderConfig
+{
+  std::string className,
+  libPath;
+  PacketBuilderConfig(): className(""), libPath(""){}
+};
+
 
 class ConfigFile
 {
@@ -410,11 +509,13 @@ public:
   void esPi(string in, double &param);
 
   void extractFloatChar(const xmlpp::Node* node, double &param);
+  void extractDecimalChar(const xmlpp::Node* node, double &param);
   void extractIntChar(const xmlpp::Node* node, int &param);
   void extractUIntChar(const xmlpp::Node* node, unsigned int &param);
   void extractStringChar(const xmlpp::Node* node, string &param);
   void extractPositionOrColor(const xmlpp::Node* node, double param[3]);
   void extractOrientation(const xmlpp::Node* node, double param[3]);
+  void extractMesh(const xmlpp::Node* node, Mesh & mesh);
 
   void processFog(const xmlpp::Node* node);
   void processOceanState(const xmlpp::Node* node);
@@ -440,14 +541,24 @@ public:
 
   void processGeometry(urdf::Geometry * geometry, Geometry * geom);
   void processPose(urdf::Pose pose, double position[3], double rpy[3], double quat[4]);
-  void processVisual(boost::shared_ptr<const urdf::Visual> visual, Link &link,
+  void processVisual(std::shared_ptr<const urdf::Visual> visual, Link &link,
                      std::map<std::string, Material> &materials);
-  void processJoint(boost::shared_ptr<const urdf::Joint> joint, Joint &jointVehicle, int parentLink, int childLink);
-  int processLink(boost::shared_ptr<const urdf::Link> link, Vehicle &vehicle, int nlink, int njoint,
+  void processJoint(std::shared_ptr<const urdf::Joint> joint, Joint &jointVehicle, int parentLink, int childLink);
+  int processLink(std::shared_ptr<const urdf::Link> link, Vehicle &vehicle, int nlink, int njoint,
                   std::map<std::string, Material> &materials); //returns current link number
   int processURDFFile(string file, Vehicle &vehicle);
 
   void postprocessVehicle(Vehicle &vehicle);
+
+  //Comms related methods
+  void processCustomCommsChannel(const xmlpp::Node* node, CustomCommsChannelConfig &channel);
+  void processAcousticCommsChannel(const xmlpp::Node* node, AcousticCommsChannelConfig &channel);
+  void processLedArray(const xmlpp::Node* node, LedArrayConfig & ledArrayConfig);
+  void processPacketBuilderConfig(const xmlpp::Node* node, PacketBuilderConfig & config);
+  void processNetTracingScript(const xmlpp::Node* node, NetTracingScriptConfig & config);
+  void processNedOriginConfig(const xmlpp::Node* node, NedOriginConfig & config);
+
+  void processTfRelativeConfig(const xmlpp::Node* node, TfRelativeConfig & config);
 
 public:
   double windx, windy, windSpeed, depth, reflectionDamping, waveScale, choppyFactor, crestFoamHeight,
@@ -462,7 +573,10 @@ public:
   list<ROSInterfaceInfo> ROSPhysInterfaces; //Physics interfaces are loaded after physics
   list<ShowTrajectory> trajectories;
   PhysicsConfig physicsConfig;
-
+  list<CustomCommsChannelConfig> customCommsChannels;
+  list<AcousticCommsChannelConfig> acousticCommsChannels;
+  NetTracingScriptConfig netTracingScriptConfig;
+  NedOriginConfig nedOriginConfig;
 
   ConfigFile(const std::string &fName);
 };

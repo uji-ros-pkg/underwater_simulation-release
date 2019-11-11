@@ -244,22 +244,36 @@ ROSPointCloudLoader::ROSPointCloudLoader(std::string topic, osg::ref_ptr<osg::Gr
 void ROSPointCloudLoader::createSubscriber(ros::NodeHandle &nh)
 {
   ROS_INFO("ROSPointCloudLoader subscriber on topic %s", topic.c_str());
-  sub_ = nh.subscribe<pcl::PointCloud<pcl::PointXYZ> >(topic, 10, &ROSPointCloudLoader::processData, this);
+  sub_ = nh.subscribe(topic, 10, &ROSPointCloudLoader::processData, this);
 }
 
-void ROSPointCloudLoader::processData(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr& msg)
+void ROSPointCloudLoader::processData(const sensor_msgs::PointCloud2ConstPtr& msg)
 {
-   osgPCDLoader<pcl::PointXYZ> pcdLoader(*msg.get());
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr colour(new pcl::PointCloud<pcl::PointXYZRGB>);
+  // I assume that 4 fields is always X Y Z RGB
+  if( msg->fields.size() != 4 ){
+    pcl::PointCloud<pcl::PointXYZ>::Ptr original(new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::PCLPointCloud2 pcl_pc;
+    pcl_conversions::toPCL(*msg, pcl_pc);
+    pcl::fromPCLPointCloud2(pcl_pc, *original);
+    colourCloudDepth( original, colour );
+    }else{
+      pcl::PCLPointCloud2 pcl_pc;
+      pcl_conversions::toPCL(*msg, pcl_pc);
+      pcl::fromPCLPointCloud2(pcl_pc, *colour);
+    }
+
+   osgPCDLoader<pcl::PointXYZRGB> pcdLoader(*colour.get());
 
    osg::ref_ptr < osg::Node > frame_id=findRN(msg->header.frame_id,scene_root);
 
    if(frame_id)
    {
      osg::ref_ptr < osg::Node > LWNode=findRN("localizedWorld",scene_root);
-     boost::shared_ptr<osg::Matrix> LWMat=getWorldCoords(LWNode);
+     std::shared_ptr<osg::Matrix> LWMat=getWorldCoords(LWNode);
      LWMat->invert(*LWMat);
 
-     boost::shared_ptr<osg::Matrix> WorldToBase=getWorldCoords(frame_id);
+     std::shared_ptr<osg::Matrix> WorldToBase=getWorldCoords(frame_id);
 
      osg::Matrixd  res=*WorldToBase * *LWMat;
      osg::ref_ptr < osg::MatrixTransform > WorldToBaseTransform= new osg::MatrixTransform(res);
@@ -277,6 +291,59 @@ void ROSPointCloudLoader::processData(const pcl::PointCloud<pcl::PointXYZ>::Cons
   {
     ROS_WARN ("%s is not a valid frame id for PointCloudLoader.",msg->header.frame_id.c_str());
   }
+}
+
+/*
+  ColorCloudDepth returns an RGB cloud coloured with depth with matlab's jet color scale
+  */
+void ROSPointCloudLoader::colourCloudDepth(pcl::PointCloud<pcl::PointXYZ>::Ptr cloudIn, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud){
+
+  //COnverts in unorganized...
+  cloud->header = cloudIn->header;
+  // Get Max and Min
+  double mx(-10000000),mn(10000000000),mean;
+  bool look_for_min_z(true);
+  bool look_for_max_z(true);
+
+  for (int k=0;k<cloudIn->size();k++){
+    if (mx<cloudIn->points[k].z && look_for_max_z) mx = cloudIn->points[k].z;
+    if (mn>cloudIn->points[k].z && look_for_min_z) mn = cloudIn->points[k].z;
+  }
+  mean = (mx+mn)/2;
+
+  // Compute Color
+  uint8_t r, g, b;
+  for (int k=0;k<cloudIn->size();k++){
+    pcl::PointXYZRGB point;
+    point.x = cloudIn->points[k].x;
+    point.y = cloudIn->points[k].y;
+    point.z = cloudIn->points[k].z;
+    double z = (point.z - mn)/(mx-mn) * 2 - 1;
+    r = (int) (base(z - 0.5) * 255);
+    g = (int) (base(z) * 255);
+    b = (int) (base(z + 0.5) * 255);
+
+    uint32_t rgb = (static_cast<uint32_t>(r) << 16 |
+                    static_cast<uint32_t>(g) << 8 | static_cast<uint32_t>(b));
+
+    point.rgb = *reinterpret_cast<float*>(&rgb);
+    cloud->push_back(point);
+  }
+}
+
+/*
+  Interpolate interpolates a value, used to colorize cloud
+  */
+double ROSPointCloudLoader::interpolate(double val, double y0, double x0, double y1, double x1){
+  return (val - x0)*(y1-y0)/(x1-x0) + y0;
+}
+
+double ROSPointCloudLoader::base(double val){
+  if (val <= -0.75) return 0;
+  else if (val <= -0.25) return interpolate(val,0,-0.75,1,-0.25);
+  else if (val <= 0.25) return 1;
+  else if (val <= 0.75) return interpolate(val,1.0,0.25,0.0,0.75);
+  else return 0;
 }
 
 ROSPointCloudLoader::~ROSPointCloudLoader(){}
@@ -333,7 +400,7 @@ ROSPointCloudLoader::~ROSPointCloudLoader(){}
  };
  */
 
-ROSJointStateToArm::ROSJointStateToArm(std::string topic, boost::shared_ptr<SimulatedIAUV> arm) :
+ROSJointStateToArm::ROSJointStateToArm(std::string topic, std::shared_ptr<SimulatedIAUV> arm) :
     ROSSubscriberInterface(topic)
 {
   this->arm = arm;
@@ -368,7 +435,7 @@ ROSJointStateToArm::~ROSJointStateToArm()
 {
 }
 
-ROSImageToHUDCamera::ROSImageToHUDCamera(std::string topic, std::string info_topic, boost::shared_ptr<HUDCamera> camera) :
+ROSImageToHUDCamera::ROSImageToHUDCamera(std::string topic, std::string info_topic, std::shared_ptr<HUDCamera> camera) :
     ROSSubscriberInterface(info_topic), cam(camera), image_topic(topic)
 {
 }
@@ -816,6 +883,56 @@ VirtualCameraToROSImage::~VirtualCameraToROSImage()
 {
 }
 
+RangeCameraToPCL::RangeCameraToPCL(VirtualCamera *camera, std::string topic, int rate) :
+    ROSPublisherInterface(topic, rate), cam(camera)
+{
+}
+
+void RangeCameraToPCL::createPublisher(ros::NodeHandle &nh)
+{
+  ROS_INFO("RangeCameraToPCL publisher on topic %s", topic.c_str());
+  pub_ = nh.advertise < pcl::PointCloud<pcl::PointXYZ> > (topic, 1);
+}
+
+void RangeCameraToPCL::publish()
+{      
+  double fov, aspect, near, far;
+  int w, h, d;
+  float * data = (float *)cam->depthTexture->data();
+
+  if (data != NULL)
+  {
+
+    w = cam->width;
+    h = cam->height;
+
+    cam->textureCamera->getProjectionMatrixAsPerspective(fov, aspect, near, far);
+    double a = far / (far - near);
+    double b = (far * near) / (near - far);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr msg (new pcl::PointCloud<pcl::PointXYZ>);
+    msg->header.frame_id = cam->name;
+
+    //Rotations to transform from OSG to TF conventions are already taken into account
+    for (int i = 0; i < h; i++)
+    {
+      for (int j = 0; j < w; j++)
+      {
+	double depth=  (b / (data[i*w+j] - a)) ;
+	msg->points.push_back (pcl::PointXYZ( (j-cam->cx)/cam->fx * depth , -(i-cam->cy)/cam->fy * depth, depth));
+
+      }
+    }
+
+    //msg->header.stamp = getROSTime();
+    pub_.publish (msg);
+
+  }
+}
+
+RangeCameraToPCL::~RangeCameraToPCL()
+{
+}
+
 RangeSensorToROSRange::RangeSensorToROSRange(VirtualRangeSensor *rangesensor, std::string topic, int rate) :
     ROSPublisherInterface(topic, rate), rs(rangesensor)
 {
@@ -985,7 +1102,7 @@ WorldToROSTF::WorldToROSTF(  SceneBuilder * scene, std::string worldRootName, un
       }
       
       osg::ref_ptr<osg::MatrixTransform> transform;
-      robot_pubs_.push_back(boost::shared_ptr<robot_state_publisher::RobotStatePublisher>(
+      robot_pubs_.push_back(std::shared_ptr<robot_state_publisher::RobotStatePublisher>(
        new robot_state_publisher::RobotStatePublisher(tree)));
   
       findNodeVisitor findNode(scene->iauvFile[i].get()->name);
@@ -1007,7 +1124,7 @@ WorldToROSTF::WorldToROSTF(  SceneBuilder * scene, std::string worldRootName, un
 
 void WorldToROSTF::createPublisher(ros::NodeHandle &nh)
 {   
-   tfpub_ = boost::shared_ptr<tf::TransformBroadcaster>(new tf::TransformBroadcaster());
+   tfpub_ = std::shared_ptr<tf::TransformBroadcaster>(new tf::TransformBroadcaster());
 }
 
 void WorldToROSTF::publish()
@@ -1075,7 +1192,7 @@ void WorldToROSTF::publish()
         std::string parent;
         if(scene->iauvFile[i].get()->multibeam_sensors[j].getTFTransform(pose,parent))
         {
-          tf::StampedTransform t(pose, getROSTime(),   "/"+scene->iauvFile[i].get()->name + "/" +parent, scene->iauvFile[i].get()->multibeam_sensors[i].name);
+          tf::StampedTransform t(pose, getROSTime(),   "/"+scene->iauvFile[i].get()->name + "/" +parent, scene->iauvFile[i].get()->multibeam_sensors[j].name);
           tfpub_->sendTransform(t);
         }  
       }
@@ -1088,7 +1205,7 @@ void WorldToROSTF::publish()
         std::string parent;
         if(scene->iauvFile[i].get()->imus[j].getTFTransform(pose,parent))
         {
-          tf::StampedTransform t(pose, getROSTime(),   "/"+scene->iauvFile[i].get()->name + "/" +parent, scene->iauvFile[i].get()->imus[i].name);
+          tf::StampedTransform t(pose, getROSTime(),   "/"+scene->iauvFile[i].get()->name + "/" +parent, scene->iauvFile[i].get()->imus[j].name);
           tfpub_->sendTransform(t);
         }  
       }
@@ -1100,7 +1217,7 @@ void WorldToROSTF::publish()
         std::string parent;
         if(scene->iauvFile[i].get()->range_sensors[j].getTFTransform(pose,parent))
         {
-          tf::StampedTransform t(pose, getROSTime(),   "/"+scene->iauvFile[i].get()->name + "/" +parent, scene->iauvFile[i].get()->range_sensors[i].name);
+          tf::StampedTransform t(pose, getROSTime(),   "/"+scene->iauvFile[i].get()->name + "/" +parent, scene->iauvFile[i].get()->range_sensors[j].name);
           tfpub_->sendTransform(t);
         }  
       }
@@ -1112,7 +1229,7 @@ void WorldToROSTF::publish()
         std::string parent;
         if(scene->iauvFile[i].get()->pressure_sensors[j].getTFTransform(pose,parent))
         {
-          tf::StampedTransform t(pose, getROSTime(),   "/"+scene->iauvFile[i].get()->name + "/" +parent, scene->iauvFile[i].get()->pressure_sensors[i].name);
+          tf::StampedTransform t(pose, getROSTime(),   "/"+scene->iauvFile[i].get()->name + "/" +parent, scene->iauvFile[i].get()->pressure_sensors[j].name);
           tfpub_->sendTransform(t);
         }  
       }
@@ -1124,7 +1241,7 @@ void WorldToROSTF::publish()
         std::string parent;
         if(scene->iauvFile[i].get()->gps_sensors[j].getTFTransform(pose,parent))
         {
-          tf::StampedTransform t(pose, getROSTime(),   "/"+scene->iauvFile[i].get()->name + "/" +parent, scene->iauvFile[i].get()->gps_sensors[i].name);
+          tf::StampedTransform t(pose, getROSTime(),   "/"+scene->iauvFile[i].get()->name + "/" +parent, scene->iauvFile[i].get()->gps_sensors[j].name);
           tfpub_->sendTransform(t);
         }  
       }
@@ -1136,7 +1253,7 @@ void WorldToROSTF::publish()
         std::string parent;
         if(scene->iauvFile[i].get()->dvl_sensors[j].getTFTransform(pose,parent))
         {
-          tf::StampedTransform t(pose, getROSTime(),   "/"+scene->iauvFile[i].get()->name + "/" +parent, scene->iauvFile[i].get()->dvl_sensors[i].name);
+          tf::StampedTransform t(pose, getROSTime(),   "/"+scene->iauvFile[i].get()->name + "/" +parent, scene->iauvFile[i].get()->dvl_sensors[j].name);
           tfpub_->sendTransform(t);
         }  
       }
@@ -1147,12 +1264,12 @@ void WorldToROSTF::publish()
    if(enableObjects_)
    {
 
-     boost::shared_ptr<osg::Matrix> LWMat=getWorldCoords(scene->scene->localizedWorld);
+     std::shared_ptr<osg::Matrix> LWMat=getWorldCoords(scene->scene->localizedWorld);
      LWMat->invert(*LWMat);
 
      for(unsigned int i=0;i<scene->objects.size();i++)
      {
-       boost::shared_ptr<osg::Matrix> objectMat= getWorldCoords(scene->objects[i]);
+       std::shared_ptr<osg::Matrix> objectMat= getWorldCoords(scene->objects[i]);
 
        osg::Matrixd  res=*objectMat * *LWMat;
 
