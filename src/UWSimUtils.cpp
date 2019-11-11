@@ -325,7 +325,7 @@ osg::Node * UWSimGeometry::retrieveResource(std::string name)
 
 }
 
-osg::Node * UWSimGeometry::loadGeometry(boost::shared_ptr<Geometry> geom)
+osg::Node * UWSimGeometry::loadGeometry(std::shared_ptr<Geometry> geom)
 {
   if (geom->type == 0)
   {
@@ -408,12 +408,12 @@ void getWorldCoordOfNodeVisitor::apply(osg::Node &node)
   }
 }
 
-boost::shared_ptr<osg::Matrix> getWorldCoordOfNodeVisitor::giveUpDaMat()
+std::shared_ptr<osg::Matrix> getWorldCoordOfNodeVisitor::giveUpDaMat()
 {
   return wcMatrix;
 }
 
-boost::shared_ptr<osg::Matrix> getWorldCoords(osg::Node* node)
+std::shared_ptr<osg::Matrix> getWorldCoords(osg::Node* node)
 {
   osg::ref_ptr<getWorldCoordOfNodeVisitor> ncv = new getWorldCoordOfNodeVisitor();
   if (node && ncv)
@@ -423,7 +423,7 @@ boost::shared_ptr<osg::Matrix> getWorldCoords(osg::Node* node)
   }
   else
   {
-    return boost::shared_ptr<osg::Matrix>();
+    return std::shared_ptr<osg::Matrix>();
   }
 }
 
@@ -433,7 +433,7 @@ boost::shared_ptr<osg::Matrix> getWorldCoords(osg::Node* node)
 #include <osg/ComputeBoundsVisitor>
 #include "uwsim/SimulatedIAUV.h"
 
-DynamicHF::DynamicHF(osg::HeightField* height, boost::shared_ptr<osg::Matrix> mat, std::vector<boost::shared_ptr<AbstractDredgeTool> > tools)
+DynamicHF::DynamicHF(osg::HeightField* height, std::shared_ptr<osg::Matrix> mat, std::vector<std::shared_ptr<AbstractDredgeTool> > tools)
 {
   dredgeTools=tools;
   heightField=height;
@@ -447,7 +447,7 @@ void DynamicHF::update( osg::NodeVisitor*,osg::Drawable* drawable )
 
   for(unsigned int i=0;i<dredgeTools.size();i++)
   {
-    boost::shared_ptr<osg::Matrix> dredgeToolmat=dredgeTools[i]->getDredgePosition();
+    std::shared_ptr<osg::Matrix> dredgeToolmat=dredgeTools[i]->getDredgePosition();
 
     int modified=0;
     int nparticles=0;
@@ -480,13 +480,13 @@ void DynamicHF::update( osg::NodeVisitor*,osg::Drawable* drawable )
 }
 
 //Create a dynamic heightfield that can be dredged
-osg::Node* createHeightField(osg::ref_ptr<osg::Node> object, std::string texFile, double percent, const std::vector<boost::shared_ptr<SimulatedIAUV> >  vehicles)
+osg::Node* createHeightField(osg::ref_ptr<osg::Node> object, std::string texFile, double percent, const std::vector<std::shared_ptr<SimulatedIAUV> >  vehicles)
 {
   osg::ComputeBoundsVisitor cbv;
   object->accept(cbv);
   osg::BoundingBox box = cbv.getBoundingBox();
 
-  boost::shared_ptr<osg::Matrix> mat=getWorldCoords( object);
+  std::shared_ptr<osg::Matrix> mat=getWorldCoords( object);
 
   box._min= mat->getRotate() * box._min;
   box._max= mat->getRotate() * box._max;
@@ -539,12 +539,12 @@ osg::Node* createHeightField(osg::ref_ptr<osg::Node> object, std::string texFile
   }
 
   //Search for dredge tools on vehicles,
-  std::vector<boost::shared_ptr<AbstractDredgeTool> > dredgeTools;
+  std::vector<std::shared_ptr<AbstractDredgeTool> > dredgeTools;
   for(unsigned int i=0;i<vehicles.size();i++)
   {
     for(unsigned int j=0;j<vehicles[i]->devices->all.size();j++)
     {
-      boost::shared_ptr<AbstractDredgeTool>  dredgeTool = boost::dynamic_pointer_cast < AbstractDredgeTool >  (vehicles[i]->devices->all[j]);
+      std::shared_ptr<AbstractDredgeTool>  dredgeTool = std::dynamic_pointer_cast < AbstractDredgeTool >  (vehicles[i]->devices->all[j]);
 
       if(dredgeTool)
         dredgeTools.push_back(dredgeTool);
@@ -568,3 +568,52 @@ osg::Node* createHeightField(osg::ref_ptr<osg::Node> object, std::string texFile
   return geode;
 }
 
+osg::Node* LightBuilder::createLightSource(unsigned int num, const osg::Vec3 &trans, const osg::Vec4 &color, float att)
+{
+  osg::ref_ptr<osg::Light> light = new osg::Light;
+  light->setLightNum(num);
+  light->setDiffuse(color);
+  light->setPosition(osg::Vec4(0.0f, 0.0f, 0.0f, 1.0f));
+  light->setConstantAttenuation(att);
+  osg::ref_ptr<osg::LightSource> lightSource = new osg::LightSource;
+  lightSource->setLight(light);
+
+  osg::ref_ptr<osg::MatrixTransform> sourceTrans =
+      new osg::MatrixTransform;
+  sourceTrans->setMatrix(osg::Matrix::translate(trans));
+  sourceTrans->addChild (lightSource.get());
+  return sourceTrans.release();
+}
+
+osg::LightSource* LightBuilder::createLightSource(unsigned int num, const osg::Vec4 &color, float att)
+{
+  osg::ref_ptr<osg::Light> light = new osg::Light;
+  light->setLightNum(num);
+  light->setDiffuse(color);
+  light->setPosition(osg::Vec4(0.0f, 0.0f, 0.0f, 1.0f));
+  light->setConstantAttenuation(att);
+  osg::ref_ptr<osg::LightSource> lightSource = new osg::LightSource;
+  lightSource->setLight(light);
+
+  return lightSource.release();
+}
+
+void switch4Bytes(void *dst, void *src) {
+  uint8_t *buf = (uint8_t *)dst;
+  *buf = *((uint8_t *)src + 3);
+  *(buf + 1) = *((uint8_t *)src + 2);
+  *(buf + 2) = *((uint8_t *)src + 1);
+  *(buf + 3) = *((uint8_t *)src);
+}
+
+void switch8Bytes(void *dst, void *src) {
+  uint8_t *buf = (uint8_t *)dst;
+  *buf = *((uint8_t *)src + 7);
+  *(buf + 1) = *((uint8_t *)src + 6);
+  *(buf + 2) = *((uint8_t *)src + 5);
+  *(buf + 3) = *((uint8_t *)src + 4);
+  *(buf + 4) = *((uint8_t *)src + 3);
+  *(buf + 5) = *((uint8_t *)src + 2);
+  *(buf + 6) = *((uint8_t *)src + 1);
+  *(buf + 7) = *((uint8_t *)src);
+}
