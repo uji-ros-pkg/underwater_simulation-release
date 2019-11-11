@@ -161,6 +161,7 @@ URDFRobot::URDFRobot(osgOcean::OceanScene *oscene, Vehicle vehicle) :
 
       linkBaseTransforms[i] = new osg::MatrixTransform;
       linkBaseTransforms[i]->setMatrix(linkBase);
+      link[i]->getOrCreateStateSet()->setMode(GL_NORMALIZE, osg::StateAttribute::ON);
       linkBaseTransforms[i]->addChild(link[i]);
 
       //linkBase.invert(linkPost);
@@ -308,7 +309,7 @@ void URDFRobot::updateJoints(std::vector<double> &q)
     btRigidBody* tgtBody = data->rigidBody;
     if (tgtBody)
     {
-      boost::shared_ptr<osg::Matrix> mat = getWorldCoords(link[i]);
+      std::shared_ptr<osg::Matrix> mat = getWorldCoords(link[i]);
       //BTTransforms do not use scale, so we turn it back to 1.
       mat->preMultScale(osg::Vec3d(1.0/mat->getScale().x(),1.0/mat->getScale().y(),1.0/mat->getScale().z())); 
       tgtBody->setWorldTransform(osgbCollision::asBtTransform(*mat));
