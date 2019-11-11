@@ -53,6 +53,7 @@
 #include <sensor_msgs/CameraInfo.h>
 #include <sensor_msgs/distortion_models.h>
 #include <sensor_msgs/Range.h>
+#include <sensor_msgs/PointCloud2.h>
 #include <image_transport/image_transport.h>
 #include <geometry_msgs/TwistStamped.h>
 #include <geometry_msgs/Pose.h>
@@ -165,7 +166,10 @@ class ROSPointCloudLoader : public ROSSubscriberInterface
 public:
   ROSPointCloudLoader(std::string topic, osg::ref_ptr<osg::Group> root, unsigned int mask,bool del);
   virtual void createSubscriber(ros::NodeHandle &nh);
-  virtual void processData(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr& msg);
+  virtual void processData(const sensor_msgs::PointCloud2ConstPtr& msg);
+  void colourCloudDepth(pcl::PointCloud<pcl::PointXYZ>::Ptr cloudIn, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud);
+  double interpolate(double val, double y0, double x0, double y1, double x1);
+  double base(double val);
   ~ROSPointCloudLoader();
 };
 
@@ -223,9 +227,9 @@ public:
 
 class ROSJointStateToArm : public ROSSubscriberInterface
 {
-  boost::shared_ptr<SimulatedIAUV> arm;
+  std::shared_ptr<SimulatedIAUV> arm;
 public:
-  ROSJointStateToArm(std::string topic, boost::shared_ptr<SimulatedIAUV> arm);
+  ROSJointStateToArm(std::string topic, std::shared_ptr<SimulatedIAUV> arm);
   virtual void createSubscriber(ros::NodeHandle &nh);
 
   virtual void processData(const sensor_msgs::JointState::ConstPtr& js);
@@ -234,12 +238,12 @@ public:
 
 class ROSImageToHUDCamera : public ROSSubscriberInterface
 {
-  boost::shared_ptr<HUDCamera> cam;
-  boost::shared_ptr<image_transport::ImageTransport> it;
+  std::shared_ptr<HUDCamera> cam;
+  std::shared_ptr<image_transport::ImageTransport> it;
   image_transport::Subscriber image_sub;
   std::string image_topic;
 public:
-  ROSImageToHUDCamera(std::string topic, std::string info_topic, boost::shared_ptr<HUDCamera> camera);
+  ROSImageToHUDCamera(std::string topic, std::string info_topic, std::shared_ptr<HUDCamera> camera);
 
   virtual void createSubscriber(ros::NodeHandle &nh);
 
@@ -280,8 +284,8 @@ public:
 class WorldToROSTF : public ROSPublisherInterface
 {
   std::vector< osg::ref_ptr<osg::MatrixTransform> > transforms_;
-  std::vector< boost::shared_ptr<robot_state_publisher::RobotStatePublisher> > robot_pubs_;
-  boost::shared_ptr<tf::TransformBroadcaster> tfpub_;
+  std::vector< std::shared_ptr<robot_state_publisher::RobotStatePublisher> > robot_pubs_;
+  std::shared_ptr<tf::TransformBroadcaster> tfpub_;
   std::string worldRootName_; 
   unsigned int enableObjects_;
   SceneBuilder * scene;
@@ -363,7 +367,7 @@ public:
 
 class ArmToROSJointState : public ROSPublisherInterface
 {
-  boost::shared_ptr<URDFRobot> arm;
+  std::shared_ptr<URDFRobot> arm;
 public:
   ArmToROSJointState(SimulatedIAUV *arm, std::string topic, int rate);
 
@@ -390,7 +394,7 @@ class VirtualCameraToROSImage : public ROSPublisherInterface
       int depth;
   };
 
-  boost::shared_ptr<image_transport::ImageTransport> it;
+  std::shared_ptr<image_transport::ImageTransport> it;
   image_transport::Publisher img_pub_;
   std::string image_topic;
   VirtualCamera *cam;
@@ -409,6 +413,21 @@ public:
   osg::ref_ptr < osg::Image > osgimage;
   OpenThreads::Mutex mutex; //Mutex to avoid image overwriting
 
+};
+
+class RangeCameraToPCL : public ROSPublisherInterface
+{
+  VirtualCamera *cam;
+
+public:
+
+  RangeCameraToPCL(VirtualCamera *camera, std::string topic, int rate);
+
+  void createPublisher(ros::NodeHandle &nh);
+
+  void publish();
+
+  ~RangeCameraToPCL();
 };
 
 class RangeSensorToROSRange : public ROSPublisherInterface
