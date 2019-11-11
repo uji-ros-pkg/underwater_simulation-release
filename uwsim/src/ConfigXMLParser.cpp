@@ -14,6 +14,7 @@
 #include <uwsim/SimulatorConfig.h>
 #include <osgDB/FileUtils>
 #include <ros/package.h>
+#include <uwsim/LedArray.h>
 
 void ConfigFile::esPi(string in, double &param)
 {
@@ -46,6 +47,18 @@ void ConfigFile::extractFloatChar(const xmlpp::Node* node, double &param)
     if (nodeText)
       esPi(nodeText->get_content(), param);
     //*param=atof(nodeText->get_content().c_str());
+  }
+}
+
+void ConfigFile::extractDecimalChar(const xmlpp::Node* node, double &param)
+{
+  xmlpp::Node::NodeList list = node->get_children();
+
+  for (xmlpp::Node::NodeList::iterator iter = list.begin(); iter != list.end(); ++iter)
+  {
+    const xmlpp::TextNode* nodeText = dynamic_cast<const xmlpp::TextNode*>(*iter);
+    if (nodeText)
+        param=atof(nodeText->get_content().c_str());
   }
 }
 
@@ -116,6 +129,20 @@ void ConfigFile::extractOrientation(const xmlpp::Node* node, double param[3])
       extractFloatChar(child, param[1]);
     else if (child->get_name() == "y")
       extractFloatChar(child, param[2]);
+  }
+}
+
+void ConfigFile::extractMesh(const xmlpp::Node* node, Mesh & mesh)
+{
+  xmlpp::Node::NodeList list = node->get_children();
+  for (xmlpp::Node::NodeList::iterator iter = list.begin(); iter != list.end(); ++iter)
+  {
+    const xmlpp::Node* child = dynamic_cast<const xmlpp::Node*>(*iter);
+
+    if (child->get_name() == "path")
+      extractStringChar(child, mesh.path);
+    else if (child->get_name() == "scaleFactor")
+      extractPositionOrColor (child, mesh.scaleFactor);
   }
 }
 
@@ -587,7 +614,7 @@ void ConfigFile::processGeometry(urdf::Geometry * geometry, Geometry * geom)
   }
 }
 
-void ConfigFile::processVisual(boost::shared_ptr<const urdf::Visual> visual, Link &link,
+void ConfigFile::processVisual(std::shared_ptr<const urdf::Visual> visual, Link &link,
                                std::map<std::string, Material> &materials)
 {
   processGeometry(visual->geometry.get(), link.geom.get());
@@ -607,7 +634,7 @@ void ConfigFile::processVisual(boost::shared_ptr<const urdf::Visual> visual, Lin
   }
 }
 
-void ConfigFile::processJoint(boost::shared_ptr<const urdf::Joint> joint, Joint &jointVehicle, int parentLink,
+void ConfigFile::processJoint(std::shared_ptr<const urdf::Joint> joint, Joint &jointVehicle, int parentLink,
                               int childLink)
 {
   jointVehicle.name = joint->name;
@@ -654,7 +681,7 @@ void ConfigFile::processJoint(boost::shared_ptr<const urdf::Joint> joint, Joint 
   }
 }
 
-int ConfigFile::processLink(boost::shared_ptr<const urdf::Link> link, Vehicle &vehicle, int nlink, int njoint,
+int ConfigFile::processLink(std::shared_ptr<const urdf::Link> link, Vehicle &vehicle, int nlink, int njoint,
                             std::map<std::string, Material> &materials)
 {
   vehicle.links[nlink].name = link->name;
@@ -728,7 +755,7 @@ int ConfigFile::processURDFFile(string file, Vehicle &vehicle)
   vehicle.links.resize(vehicle.nlinks);
   vehicle.njoints = model.joints_.size();
   vehicle.joints.resize(vehicle.njoints);
-  boost::shared_ptr<const urdf::Link> root = model.getRoot();
+  std::shared_ptr<const urdf::Link> root = model.getRoot();
   processLink(root, vehicle, 0, 0, vehicle.materials);
   return 0;
 }
@@ -1024,6 +1051,126 @@ void ConfigFile::postprocessVehicle(Vehicle &vehicle)
   }
 }
 
+void ConfigFile::processAcousticCommsChannel(const xmlpp::Node* node, AcousticCommsChannelConfig &channel)
+{
+  xmlpp::Node::NodeList list = node->get_children();
+  for (xmlpp::Node::NodeList::iterator iter = list.begin(); iter != list.end(); ++iter)
+  {
+    const xmlpp::Node* child = dynamic_cast<const xmlpp::Node*>(*iter);
+    if (child->get_name() == "id")
+      extractUIntChar(child, channel.id);
+    else if (child->get_name() == "bandwidth")
+      extractFloatChar(child, channel.bandwidth);
+    else if(child->get_name() == "temperature")
+      extractFloatChar(child, channel.temperature);
+    else if (child->get_name() == "salinity")
+      extractFloatChar(child, channel.salinity);
+    else if(child->get_name() == "noiseLvl")
+      extractFloatChar(child, channel.noise);
+    else if(child->get_name() == "logLevel")
+      extractStringChar(child, channel.logLevel);
+  }
+}
+
+void ConfigFile::processCustomCommsChannel(const xmlpp::Node* node, CustomCommsChannelConfig &channel)
+{
+  xmlpp::Node::NodeList list = node->get_children();
+  for (xmlpp::Node::NodeList::iterator iter = list.begin(); iter != list.end(); ++iter)
+  {
+    const xmlpp::Node* child = dynamic_cast<const xmlpp::Node*>(*iter);
+    if (child->get_name() == "id")
+      extractUIntChar(child, channel.id);
+    else if (child->get_name() == "propTimeIncPerMeter")
+      extractFloatChar(child, channel.propTimeIncPerMeter);
+    else if(child->get_name() == "minPropTime")
+      extractFloatChar(child, channel.minPropTime);
+    else if(child->get_name() == "logLevel")
+      extractStringChar(child, channel.logLevel);
+  }
+}
+
+void ConfigFile::processLedArray(const xmlpp::Node* node, LedArrayConfig & ledArrayConfig)
+{
+  xmlpp::Node::NodeList list = node->get_children();
+  for (xmlpp::Node::NodeList::iterator iter = list.begin(); iter != list.end(); ++iter)
+  {
+    const xmlpp::Node* child = dynamic_cast<const xmlpp::Node*>(*iter);
+    if (child->get_name() == "name")
+      extractStringChar(child, ledArrayConfig.name);
+    else if (child->get_name() == "relativeTo")
+      extractStringChar(child, ledArrayConfig.relativeTo);
+    else if (child->get_name() == "position")
+      extractPositionOrColor(child, ledArrayConfig.position);
+    else if (child->get_name() == "orientation")
+      extractOrientation(child, ledArrayConfig.orientation);
+    else if (child->get_name() == "radio")
+      extractFloatChar(child, ledArrayConfig.radio);
+    else if (child->get_name() == "space")
+      extractFloatChar(child, ledArrayConfig.space);
+  }
+}
+
+void ConfigFile::processTfRelativeConfig(const xmlpp::Node* node, TfRelativeConfig & config)
+{
+  xmlpp::Node::NodeList list = node->get_children();
+  for (xmlpp::Node::NodeList::iterator iter = list.begin(); iter != list.end(); ++iter)
+  {
+    const xmlpp::Node* child = dynamic_cast<const xmlpp::Node*>(*iter);
+    if (child->get_name() == "tfId")
+      extractStringChar(child, config.tfId);
+    else if (child->get_name() == "position")
+      extractPositionOrColor(child, config.position);
+    else if (child->get_name() == "orientation")
+      extractOrientation(child, config.orientation);
+  }
+}
+
+void ConfigFile::processPacketBuilderConfig(const xmlpp::Node* node, PacketBuilderConfig & config)
+{
+  xmlpp::Node::NodeList list = node->get_children();
+  for (xmlpp::Node::NodeList::iterator iter = list.begin(); iter != list.end(); ++iter)
+  {
+    const xmlpp::Node* child = dynamic_cast<const xmlpp::Node*>(*iter);
+    if (child->get_name() == "className")
+      extractStringChar(child, config.className);
+    else if (child->get_name() == "libPath")
+      extractStringChar(child, config.libPath);
+  }
+}
+
+void ConfigFile::processNetTracingScript(const xmlpp::Node* node, NetTracingScriptConfig & config)
+{
+  xmlpp::Node::NodeList list = node->get_children();
+  for (xmlpp::Node::NodeList::iterator iter = list.begin(); iter != list.end(); ++iter)
+  {
+    const xmlpp::Node* child = dynamic_cast<const xmlpp::Node*>(*iter);
+    if (child->get_name() == "className")
+      extractStringChar(child, config.className);
+    else if (child->get_name() == "libPath")
+      extractStringChar(child, config.libPath);
+    else if (child->get_name() == "logToFile")
+      extractStringChar(child, config.logToFile);
+    else if (child->get_name() == "logToConsole")
+      extractIntChar(child, config.logToConsole);
+    else if (child->get_name() == "asyncLog")
+      extractIntChar(child, config.asyncLog);
+  }
+}
+
+void ConfigFile::processNedOriginConfig(const xmlpp::Node* node, NedOriginConfig & config)
+{
+  xmlpp::Node::NodeList list = node->get_children();
+  config.enabled = true;
+  for (xmlpp::Node::NodeList::iterator iter = list.begin(); iter != list.end(); ++iter)
+  {
+    const xmlpp::Node* child = dynamic_cast<const xmlpp::Node*>(*iter);
+    if (child->get_name() == "lat")
+      extractDecimalChar(child, config.lat);
+    else if (child->get_name() == "lon")
+      extractDecimalChar(child, config.lon);
+  }
+}
+
 void ConfigFile::processVehicle(const xmlpp::Node* node, Vehicle &vehicle)
 {
   xmlpp::Node::NodeList list = node->get_children();
@@ -1039,6 +1186,12 @@ void ConfigFile::processVehicle(const xmlpp::Node* node, Vehicle &vehicle)
       extractStringChar(child, aux);
       processURDFFile(aux, vehicle);
     }
+    else if (child->get_name() == "fdm")
+      extractIntChar(child, vehicle.fdmPort);
+    else if (child->get_name() == "tf")
+      processTfRelativeConfig(child, vehicle.tfRelativeConfig);
+    else if (child->get_name() == "vr")
+      extractIntChar(child, vehicle.vr);
     else if (child->get_name() == "position")
       extractPositionOrColor(child, vehicle.position);
     else if (child->get_name() == "orientation")
@@ -1059,6 +1212,11 @@ void ConfigFile::processVehicle(const xmlpp::Node* node, Vehicle &vehicle)
       Vcam aux;
       aux.init();
       aux.range = 1;
+      const xmlpp::Attribute * atrib =  dynamic_cast<const xmlpp::Element*>(child)->get_attribute("underwaterParticles");
+      if(atrib and atrib->get_value()=="true")
+      {
+        aux.underwaterParticles=true;
+      }
       processVcam(child, aux);
       vehicle.VRangecams.push_back(aux);
     }
@@ -1122,6 +1280,13 @@ void ConfigFile::processVehicle(const xmlpp::Node* node, Vehicle &vehicle)
       }
       processMultibeamSensor(child, aux);
       vehicle.multibeam_sensors.push_back(aux);
+    }
+    else if (child->get_name() == "LedArray")
+    {
+        LedArrayConfig ledArrayConfig;
+        processLedArray(child, ledArrayConfig);
+        ledArrayConfig.enabled = true;
+        vehicle.ledArrayConfig = ledArrayConfig;
     }
     else
     {
@@ -1372,6 +1537,10 @@ void ConfigFile::processROSInterfaces(const xmlpp::Node* node)
       else
          rosInterface.del=true;
     }
+    else if (child->get_name() == "RangeCameraToPCL")
+    {
+      rosInterface.type = ROSInterfaceInfo::RangeCameraToPCL;
+    }
     else if (child->get_name() == "SimulatedDeviceROS")
     {
       xmlpp::Node::NodeList sublist = child->get_children();
@@ -1429,6 +1598,26 @@ void ConfigFile::processXML(const xmlpp::Node* node)
         processSimParams(child);
       else if (child->get_name() == "camera")
         processCamera(child);
+      else if (child->get_name() == "nedOrigin")
+      {
+        processNedOriginConfig(child, nedOriginConfig);
+      }
+      else if (child->get_name() == "netTracingScript")
+      {
+        processNetTracingScript (child, netTracingScriptConfig);
+      }
+      else if (child->get_name() == "CustomCommsChannel")
+      {
+        CustomCommsChannelConfig channel;
+        processCustomCommsChannel(child, channel);
+        customCommsChannels.push_back(channel);
+      }
+      else if (child->get_name() == "AcousticCommsChannel")
+      {
+        AcousticCommsChannelConfig channel;
+        processAcousticCommsChannel(child, channel);
+        acousticCommsChannels.push_back(channel);
+      }
       else if (child->get_name() == "vehicle")
       {
         Vehicle vehicle;

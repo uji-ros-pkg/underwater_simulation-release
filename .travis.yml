@@ -1,37 +1,42 @@
-# Generic UWSim Travis Continuous Integration Configuration File
-sudo: required
-dist: trusty
-language:
-  - generic
+# This config uses industrial_ci (https://github.com/ros-industrial/industrial_ci.git).
+# For troubleshooting, see readme (https://github.com/ros-industrial/industrial_ci/blob/master/README.rst)
+
+language: generic # optional, just removes the language badge
+
 notifications:
   email:
     recipients:
-      - perezsolerj@gmail.com
-    on_success: change #[always|never|change] # default: change
-    on_failure: change #[always|never|change] # default: always
-before_install:
-  - export ROS_DISTRO=indigo
-  - export CI_SOURCE_PATH=$(pwd)
-  - export REPOSITORY_NAME=${PWD##*/}
-  - echo "Testing branch $TRAVIS_BRANCH of $REPOSITORY_NAME"
-  - sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu trusty main" > /etc/apt/sources.list.d/ros-latest.list'
-  - wget http://packages.ros.org/ros.key -O - | sudo apt-key add -
-  - sudo apt-get update -qq
-  - sudo apt-get install -qq -y python-catkin-pkg python-rosdep python-wstool ros-$ROS_DISTRO-catkin ros-$ROS_DISTRO-ros
-  - sudo rosdep init
-  - rosdep update
+      - centelld@uji.es
+
+services:
+  - docker
+
+# include the following block if the C/C++ build artifacts should get cached by Travis,
+# CCACHE_DIR needs to get set as well to actually fill the cache
+cache:
+  directories:
+    - $HOME/.ccache
+
+git:
+  quiet: false # optional, silences the cloning of the target repository
+
+# configure the build environment(s)
+# https://github.com/ros-industrial/industrial_ci/blob/master/doc/index.rst#variables-you-can-configure
+env:
+  global: # global settings for all jobs
+    - ROS_REPO=ros
+    - DEBUG_BASH=true
+    - VERBOSE_OUTPUT=false
+    - CATKIN_CONFIG='--isolate-install'
+    - UPSTREAM_WORKSPACE=file
+    - BEFORE_SCRIPT='./setup.sh'
+    - CCACHE_DIR=$HOME/.ccache # enables C/C++ caching in industrial_ci
+  matrix: # each line is a job
+    - ROS_DISTRO="melodic"
+
+# clone and run industrial_ci
 install:
-  # Create workspace
-  - mkdir -p ~/ros/ws_uwsim/src
-  - cd ~/ros/ws_uwsim/src
-  - wstool init .
-  - git clone -b $ROS_DISTRO-devel https://github.com/uji-ros-pkg/underwater_simulation.git
-  - rm -rf $REPOSITORY_NAME
-  - ln -s $CI_SOURCE_PATH . # Link the repo we are testing to the new workspace
-  - cd ../
-  # Install dependencies for source repos
-  - rosdep install --from-paths src --ignore-src --rosdistro $ROS_DISTRO -y
-before_script: # Use this to prepare your build for testing e.g. copy database configurations, environment variables, etc.
-  - source /opt/ros/$ROS_DISTRO/setup.bash  
-script: # All commands must exit with code 0 on success. Anything else is considered failure.
-  - catkin_make -j2
+  - git clone --quiet --depth 1 https://github.com/uji-ros-pkg/industrial_ci.git .industrial_ci
+script:
+  - .industrial_ci/travis.sh
+
