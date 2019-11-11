@@ -1,10 +1,10 @@
-<!ELEMENT UWSimScene (oceanState?,simParams?,camera?,vehicle*,object*,rosInterfaces?)>
+<!ELEMENT UWSimScene (oceanState?,simParams?,camera?, nedOrigin?, netTracingScript?, (CustomCommsChannel*)?,(AcousticCommsChannel*)?,vehicle*,object*,rosInterfaces?)>
 <!ATTLIST UWSimScene xmlns:xacro CDATA #IMPLIED>
 
 <!-- elementos oceanScene -->
 <!ELEMENT oceanState (windx?,windy?,windSpeed?,depth?,reflectionDamping?,waveScale?,isNotChoppy?,choppyFactor?,crestFoamHeight?,oceanSurfaceHeight?,fog?,color?,attenuation?)>
 <!ELEMENT simParams (disableShaders?,resw?,resh?,offsetp?,offsetr?,enablePhysics?,gravity?,physicsFrequency?,physicsSubSteps?, physicsSolver?,showTrajectory*,lightRate?)>
-<!ELEMENT vehicle (name,file,jointValues?,position?,orientation?,scaleFactor?,virtualCamera*, structuredLightProjector*, rangeSensor*, objectPicker*, imu*, pressureSensor*, gpsSensor*, dvlSensor*, virtualRangeImage*,multibeamSensor*, simulatedDevices?, echo*, ForceSensor*, DredgeTool*)>
+<!ELEMENT vehicle (name,file, fdm?, tf?, vr?, jointValues?,position?,orientation?,scaleFactor?,virtualCamera*, structuredLightProjector*, rangeSensor*, objectPicker*, imu*, pressureSensor*, gpsSensor*, dvlSensor*, virtualRangeImage*,multibeamSensor*, simulatedDevices?, echo*, ForceSensor*, DredgeTool*, CustomCommsDevice*, AcousticCommsDevice*, LedArray?)>
 <!ELEMENT virtualCamera (name,relativeTo,resw?,resh?,position?,orientation?,baseline?,frameId?,fovy?, parameters?, showpath?,grayscale?,std?)>
 <!ELEMENT virtualRangeImage (name,relativeTo,resw?,resh?,position?,orientation?,frameId?,fovy?,parameters?)>
 <!ELEMENT structuredLightProjector (name,relativeTo,fov,image_name,laser?,position?,orientation?)>
@@ -17,7 +17,7 @@
 <!ELEMENT multibeamSensor (name,relativeTo,visible?,position?,orientation?, initAngle,finalAngle, angleIncr,range)>
 <!ELEMENT camera (freeMotion?,objectToTrack?,fov?,aspectRatio?,near?,far?,position?,lookAt?) >
 <!ELEMENT object (name,file,position,orientation,scaleFactor?,offsetp?,offsetr?,physics?)>
-<!ELEMENT rosInterfaces ((ROSOdomToPAT*)?, (PATToROSOdom*)?, (WorldToROSTF*)?, (ArmToROSJointState*)?, (ROSJointStateToArm*)?, (VirtualCameraToROSImage*)?, (ROSImageToHUD*)?,(ROSTwistToPAT*)?, (RangeSensorToROSRange*)?, (ROSPoseToPAT*)?, (ImuToROSImu*)?, (PressureSensorToROS*)?, (GPSSensorToROS*)?, (DVLSensorToROS*)?, (RangeImageSensorToROSImage*)?,(multibeamSensorToLaserScan*)?, (SimulatedDeviceROS*)?,(contactSensorToROS*)?,(echoROS*)?,(ForceSensorROS*)?,(ROSPointCloudLoader*)?)>
+<!ELEMENT rosInterfaces ((ROSOdomToPAT*)?, (PATToROSOdom*)?, (WorldToROSTF*)?, (ArmToROSJointState*)?, (ROSJointStateToArm*)?, (VirtualCameraToROSImage*)?, (ROSImageToHUD*)?,(ROSTwistToPAT*)?, (RangeSensorToROSRange*)?, (ROSPoseToPAT*)?, (ImuToROSImu*)?, (PressureSensorToROS*)?, (GPSSensorToROS*)?, (DVLSensorToROS*)?, (RangeImageSensorToROSImage*)?,(multibeamSensorToLaserScan*)?, (SimulatedDeviceROS*)?,(contactSensorToROS*)?,(echoROS*)?,(ForceSensorROS*)?,(ROSPointCloudLoader*)?,(RangeCameraToPCL*)?, (CustomCommsDeviceROS*)?, (AcousticCommsDeviceROS*)?)>
 
 <!-- elementos comunes -->
 <!ELEMENT position (x,y,z)>
@@ -80,6 +80,7 @@
 <!ELEMENT objectToTrack (#PCDATA)>
 
 <!-- elementos virtualCamera -->
+<!ATTLIST virtualRangeImage underwaterParticles (true|false) #IMPLIED>
 <!ELEMENT relativeTo (#PCDATA)>
 <!ELEMENT parameters (fx,fy,x0,y0,f,n,k)>
 <!ELEMENT fovy (#PCDATA)>
@@ -137,6 +138,9 @@
 <!ELEMENT contactSensorToROS (name, topic, rate?)>
 <!ELEMENT ROSPointCloudLoader (topic)>
 <!ATTLIST ROSPointCloudLoader delLastPCD (true|false) #IMPLIED>
+<!ELEMENT RangeCameraToPCL (cameraName, topic, rate?)>
+<!ELEMENT CustomCommsDeviceROS (name, topic, rate?)>
+<!ELEMENT AcousticCommsDeviceROS (name, topic, rate?)>
 
 <!ELEMENT width (#PCDATA)>
 <!ELEMENT height (#PCDATA)>
@@ -189,3 +193,79 @@ echoROS?
 
 <!ELEMENT DredgeTool (name, target, offsetp, offsetr)>
 
+<!-- *Comms* items -->
+<!ELEMENT id (#PCDATA)>
+<!ELEMENT channelId (#PCDATA)>
+<!ELEMENT txChannelId (#PCDATA)>
+<!ELEMENT rxChannelId (#PCDATA)>
+<!ELEMENT propTimeIncPerMeter (#PCDATA)>
+<!ELEMENT minPropTime (#PCDATA)>
+<!ELEMENT tfId (#PCDATA)>
+<!ELEMENT dccommsId (#PCDATA)>
+<!ELEMENT relativeTfId (#PCDATA)>
+<!ELEMENT mac (#PCDATA)>
+<!ELEMENT maxBitRate (#PCDATA)>
+<!ELEMENT intrinsicDelay (#PCDATA)>
+<!ELEMENT prTimeIncPerMeter (#PCDATA)>
+<!ELEMENT bitrate (#PCDATA)>
+<!ELEMENT maxDistance (#PCDATA)>
+<!ELEMENT minDistance (#PCDATA)>
+<!ELEMENT mesh (path, scaleFactor?)>
+<!ELEMENT path (#PCDATA)>
+<!ELEMENT txFifoSize (#PCDATA)>
+<!ELEMENT bandwidth (#PCDATA)>
+<!ELEMENT temperature (#PCDATA)>
+<!ELEMENT salinity (#PCDATA)>
+<!ELEMENT noiseLvl (#PCDATA)>
+<!ELEMENT pT (#PCDATA)>
+<!ELEMENT frequency (#PCDATA)>
+<!ELEMENT L (#PCDATA)>
+<!ELEMENT K (#PCDATA)>
+<!ELEMENT turnOnEnergy (#PCDATA)>
+<!ELEMENT turnOffEnergy (#PCDATA)>
+<!ELEMENT preamble (#PCDATA)>
+<!ELEMENT pTConsume (#PCDATA)>
+<!ELEMENT pRConsume (#PCDATA)>
+<!ELEMENT pIdle (#PCDATA)>
+<!ELEMENT symbolsPerSecond (#PCDATA)>
+<!ELEMENT codingEff (#PCDATA)>
+<!ELEMENT bitErrorRate (#PCDATA)>
+<!ELEMENT energyLevel (#PCDATA)>
+<!ELEMENT errorUnit (#PCDATA)>
+<!ELEMENT errorRateExpr (#PCDATA)>
+<!ELEMENT logLevel (#PCDATA)>
+<!ELEMENT disable (#PCDATA)>
+<!ELEMENT fdm (#PCDATA)>
+<!ELEMENT lat (#PCDATA)>
+<!ELEMENT lon (#PCDATA)>
+<!ELEMENT tx (#PCDATA)>
+<!ELEMENT rx (#PCDATA)>
+<!ELEMENT vr (#PCDATA)>
+<!ELEMENT logToFile (#PCDATA)>
+<!ELEMENT logToConsole (#PCDATA)>
+<!ELEMENT asyncLog (#PCDATA)>
+<!ELEMENT maxBackoffSlots (#PCDATA)>
+
+<!ELEMENT macProtocol (name, maxDistance?, maxBackoffSlots?)>
+<!ELEMENT nedOrigin (lat, lon)>
+<!ELEMENT rateErrorModel (errorUnit, errorRateExpr)>
+<!ELEMENT tf (tfId, position?, orientation?)>
+<!ELEMENT jitter (tx?, rx)>
+<!ELEMENT className (#PCDATA)>
+<!ELEMENT libPath (#PCDATA)>
+<!ELEMENT txPacketBuilder (className, libPath?)>
+<!ELEMENT rxPacketBuilder (className, libPath?)>
+<!ELEMENT netTracingScript (className, libPath?, logToFile?, logToConsole?, asyncLog?)>
+<!ELEMENT energyModel (energyLevel, turnOnEnergy, turnOffEnergy, pTConsume, pRConsume, pIdle, pT)>
+
+<!ELEMENT AcousticCommsChannel (id, bandwidth?, temperature?, salinity?, noiseLvl?, logLevel?)>
+<!ELEMENT AcousticCommsDevice (dccommsId, channelId, relativeTo, mac, symbolsPerSecond, codingEff?, bitErrorRate?, txFifoSize?, tfId?, relativeTfId?, position?, orientation?, mesh?, range?, frequency?, L?, K?, energyModel?, preamble?, macProtocol?, txPacketBuilder, rxPacketBuilder, logLevel?, disable?)>
+<!ELEMENT CustomCommsChannel (id,propTimeIncPerMeter?,minPropTime?, logLevel?)>
+<!ELEMENT CustomCommsDevice (dccommsId, txChannelId, rxChannelId, relativeTo, mac, macProtocol?, bitrate, txFifoSize?, tfId?, relativeTfId?, position?, orientation?, mesh?, intrinsicDelay?, prTimeIncPerMeter?, jitter?, maxDistance?, minDistance?, rateErrorModel?, txPacketBuilder, rxPacketBuilder, logLevel?, disable?)>
+<!-- *Comms* items end-->
+
+<!-- Utils -->
+<!ELEMENT radio (#PCDATA)>
+<!ELEMENT space (#PCDATA)>
+<!ELEMENT LedArray (name, relativeTo, position, orientation, radio?, space?)>
+<!-- Utils end -->
