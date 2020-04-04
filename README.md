@@ -1,3 +1,29 @@
+## underwater_simulation (melodic) - 1.4.2-3
+
+The packages in the `underwater_simulation` repository were released into the `melodic` distro by running `/usr/local/bin/bloom-release --rosdistro melodic --track melodic underwater_simulation` on `Sat, 04 Apr 2020 16:14:43 -0000`
+
+These packages were released:
+- `underwater_sensor_msgs`
+- `underwater_vehicle_dynamics`
+- `uwsim`
+
+Version of package(s) in repository `underwater_simulation`:
+
+- upstream repository: https://github.com/uji-ros-pkg/underwater_simulation.git
+- release repository: https://github.com/uji-ros-pkg/underwater_simulation-release.git
+- rosdistro version: `1.4.2-2`
+- old version: `1.4.2-2`
+- new version: `1.4.2-3`
+
+Versions of tools used:
+
+- bloom version: `0.8.0`
+- catkin_pkg version: `0.4.16`
+- rosdep version: `0.18.0`
+- rosdistro version: `0.8.0`
+- vcstools version: `0.1.40`
+
+
 ## underwater_simulation (melodic) - 1.4.2-2
 
 The packages in the `underwater_simulation` repository were released into the `melodic` distro by running `/usr/local/bin/bloom-release --rosdistro melodic --track melodic underwater_simulation` on `Sun, 15 Mar 2020 16:52:54 -0000`
